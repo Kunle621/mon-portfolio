@@ -1,0 +1,239 @@
+ Portfolio Freelance complet (React + Node.js + MongoDB) avec notifications et thème clair/sombre
+Crée-moi une application web complète, moderne et professionnelle, composée de :
+ Frontend : React + TailwindCSS
+ Backend : Node.js + Express
+Base de données : MongoDB (Mongoose)
+Le but est de créer un portfolio professionnel bilingue (Français / Anglais) pour un freelancer, avec interface responsive, thème clair/sombre et SEO avancé, ainsi qu’un système complet de notifications.
+
+🧑‍💼 1. Partie publique (visiteurs)
+Page d’accueil élégante et moderne :
+Nom, photo, métier (“Développeur Web Freelance / Freelance Web Developer”)
+
+
+Bouton CTA : “Travaillons ensemble / Work with me” ou “Contactez-moi / Contact me”
+
+
+Sélecteur de langue FR/EN pour changer instantanément le contenu
+
+
+Bouton de changement de thème clair/sombre (toggle)
+
+
+Section “À propos / About me” :
+Biographie, compétences, outils (React, Node.js, etc.)
+
+
+Bouton “Télécharger mon CV / Download CV”
+
+
+Texte bilingue selon la langue choisie
+
+
+Section “Projets récents / Recent Projects” :
+Grille de projets avec images, titres, descriptions, liens GitHub / démo
+
+
+Filtrage / tri par catégorie
+
+
+Texte bilingue (FR/EN)
+
+
+Section “Services” :
+Liste de prestations (Développement Web, SEO, UI/UX, etc.) avec icônes
+
+
+Texte bilingue
+
+
+Section “Témoignages / Testimonials” :
+Avis clients avec photo, nom, fonction, texte FR/EN
+
+
+Formulaire de contact bilingue :
+Champs : nom, e-mail, message
+
+
+Envoi via le backend Node.js
+
+
+Notifications :
+
+
+E-mail instantané à l’admin quand un nouveau message est reçu
+
+
+Notification visuelle dans le tableau de bord admin (nouveau message)
+
+
+Message de confirmation bilingue : “Merci pour votre message / Thank you for your message”
+
+
+Section newsletter :
+Champ e-mail + bouton “S’abonner / Subscribe”
+
+
+Texte bilingue
+
+
+Notifications :
+
+
+E-mail instantané à l’admin quand un nouvel abonné s’inscrit
+
+
+Badge notification dans le dashboard admin
+
+
+Page “Blog / Actualités” :
+Liste d’articles ou projets récents avec pagination
+
+
+URL propres (slug)
+
+
+Texte bilingue
+
+
+Pied de page / Footer :
+Liens LinkedIn, GitHub, Upwork, Fiverr, e-mail
+
+
+Copyright dynamique (année actuelle)
+
+
+Option de changement de thème clair/sombre
+
+
+
+🔐 2. Partie administrateur (admin)
+Connexion sécurisée (JWT ou session + bcrypt)
+Tableau de bord (Dashboard) :
+Modifier biographie, infos, photo de profil
+
+
+Ajouter / modifier / supprimer projets et articles
+
+
+Gérer abonnés newsletter
+
+
+Publier / masquer projet ou article
+
+
+Notifications en temps réel pour :
+
+
+Nouveaux messages du formulaire contact
+
+
+Nouveaux abonnés newsletter
+
+
+Interface responsive, moderne, avec sidebar et cartes
+
+
+Texte bilingue FR/EN pour tous les éléments
+
+
+Option de changement de thème clair/sombre pour l’admin
+
+
+
+💌 3. Système de notifications et newsletter
+Messages de contact :
+Stockés dans la base de données
+
+
+Notification e-mail instantanée à l’admin
+
+
+Notification visuelle dans le dashboard (badge ou pop-up)
+
+
+Abonnés newsletter :
+Stockage des e-mails
+
+
+Envoi d’e-mails automatiques lors de nouvelles publications (Nodemailer, SendGrid ou Mailgun)
+
+
+Notification e-mail à l’admin pour chaque nouvel abonné
+
+
+Page “Désabonnement” fonctionnelle
+
+
+Texte bilingue dans tous les e-mails
+
+
+⚙️ 4. SEO, performance et redirections
+SEO complet : balises meta dynamiques, OpenGraph, Twitter, sitemap.xml, robots.txt, JSON-LD pour Google (Person, Portfolio, BlogPosting)
+
+
+Redirection intelligente après contact ou abonnement → page “Merci” bilingue
+
+
+Performance : lazy loading images, compression gzip, optimisation des ressources
+
+
+Intégration Google Analytics et Search Console
+
+
+🧱 5. Stack technique et structure
+Frontend : React (Vite ou CRA) + TailwindCSS
+
+
+Backend : Node.js + Express (API REST sécurisée)
+
+
+Base de données : MongoDB ou PostgreSQL (Prisma possible)
+
+
+Authentification admin JWT + bcrypt
+
+
+CORS + Helmet configurés pour sécurité
+
+
+Déploiement : frontend → Vercel, backend → Render
+
+
+Code bien commenté, organisé et scalable
+
+
+
+🎨 6. Design et expérience utilisateur
+Responsive complet : mobile, tablette, desktop
+
+
+Thème clair / sombre avec toggle pour utilisateurs et admin
+
+
+Typographie professionnelle + palette moderne
+
+
+Animations fluides (Framer Motion ou AOS)
+
+
+Favicon + icônes cohérentes (React Icons)
+
+
+Messages d’erreur et de succès clairs, bilingues
+
+
+
+🧩 Résumé final
+ Crée un portfolio professionnel complet, bilingue et responsive, avec :
+Interface publique moderne, thème clair/sombre et SEO-ready
+
+
+Panneau admin sécurisé avec gestion du contenu et notifications en temps réel
+
+
+Système de contact et newsletter avec alertes par e-mail
+
+
+Architecture scalable et prête à déployer (React + Node + DB)
+
+
