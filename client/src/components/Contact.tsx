@@ -6,7 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, MapPin, Phone } from "lucide-react";
-import { contactAPI } from "@/lib/api";
 
 export function Contact() {
   const { t } = useLanguage();
@@ -23,8 +22,9 @@ export function Contact() {
     setIsSubmitting(true);
 
     try {
-      await contactAPI.submit(formData);
-      
+      // Simuler un succès
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       toast({
         title: t("Message envoyé !", "Message sent!"),
         description: t(

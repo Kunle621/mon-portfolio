@@ -1,20 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Star } from "lucide-react";
-import { testimonialsAPI } from "@/lib/api";
-import client1Image from "@assets/generated_images/Female_client_testimonial_photo_921cb9be.png";
-import client2Image from "@assets/generated_images/Male_client_testimonial_photo_73d4bcaa.png";
-import client3Image from "@assets/generated_images/Young_entrepreneur_testimonial_photo_5c4fda99.png";
+import client1Image from "@/assets/generated_images/Female_client_testimonial_photo_921cb9be.png";
+import client2Image from "@/assets/generated_images/Male_client_testimonial_photo_73d4bcaa.png";
+import client3Image from "@/assets/generated_images/Young_entrepreneur_testimonial_photo_5c4fda99.png";
 
 export function Testimonials() {
   const { t, language } = useLanguage();
 
-  const { data: fetchedTestimonials, isLoading } = useQuery({
-    queryKey: ["/api/testimonials"],
-    queryFn: testimonialsAPI.getAll,
-  });
-
+  // Données statiques
   const demoTestimonials = [
     {
       id: "1",
@@ -45,41 +39,6 @@ export function Testimonials() {
     },
   ];
 
-  const testimonials = (fetchedTestimonials && fetchedTestimonials.length > 0) ? fetchedTestimonials : demoTestimonials;
-
-  if (isLoading) {
-    return (
-      <section id="testimonials" className="py-20 md:py-24 px-4 md:px-8 bg-muted/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold mb-4">
-              {t("Témoignages", "Testimonials")}
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="p-6 animate-pulse">
-                <div className="flex gap-1 mb-4">
-                  {[1, 2, 3, 4, 5].map((j) => (
-                    <div key={j} className="w-5 h-5 bg-muted rounded" />
-                  ))}
-                </div>
-                <div className="h-20 bg-muted rounded mb-6" />
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-muted" />
-                  <div className="flex-1">
-                    <div className="h-4 bg-muted rounded mb-2 w-3/4" />
-                    <div className="h-3 bg-muted rounded w-1/2" />
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section id="testimonials" className="py-20 md:py-24 px-4 md:px-8 bg-muted/30">
       <div className="max-w-7xl mx-auto">
@@ -96,7 +55,7 @@ export function Testimonials() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {testimonials.map((testimonial) => (
+          {demoTestimonials.map((testimonial) => (
             <Card key={testimonial.id} className="p-6" data-testid={`testimonial-${testimonial.id}`}>
               <div className="flex gap-1 mb-4">
                 {Array.from({ length: testimonial.rating }).map((_, i) => (

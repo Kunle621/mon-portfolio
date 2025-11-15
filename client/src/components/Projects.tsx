@@ -1,24 +1,17 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Github, ExternalLink } from "lucide-react";
-import { projectsAPI } from "@/lib/api";
-import ecommerceImage from "@assets/generated_images/E-commerce_project_screenshot_16f17c68.png";
-import taskAppImage from "@assets/generated_images/Task_management_app_mockup_e05ae4f3.png";
-import realEstateImage from "@assets/generated_images/Real_estate_website_screenshot_88af8217.png";
+import ecommerceImage from "@/assets/generated_images/E-commerce_project_screenshot_16f17c68.png";
+import taskAppImage from "@/assets/generated_images/Task_management_app_mockup_e05ae4f3.png";
+import realEstateImage from "@/assets/generated_images/Real_estate_website_screenshot_88af8217.png";
 
 export function Projects() {
   const { t, language } = useLanguage();
   const [filter, setFilter] = useState<string>("all");
 
-  const { data: fetchedProjects, isLoading } = useQuery({
-    queryKey: ["/api/projects"],
-    queryFn: projectsAPI.getAll,
-  });
-
-  // Use fetched projects if available, otherwise fallback to demo data
+  // Données statiques
   const demoProjects = [
     {
       id: "1",
@@ -55,8 +48,6 @@ export function Projects() {
     },
   ];
 
-  const projects = fetchedProjects && fetchedProjects.length > 0 ? fetchedProjects : demoProjects;
-
   const categories = [
     { value: "all", labelFr: "Tous", labelEn: "All" },
     { value: "web", labelFr: "Web", labelEn: "Web" },
@@ -64,37 +55,8 @@ export function Projects() {
   ];
 
   const filteredProjects = filter === "all" 
-    ? projects 
-    : projects.filter(p => p.category === filter);
-
-  if (isLoading) {
-    return (
-      <section id="projects" className="py-20 md:py-24 px-4 md:px-8 bg-muted/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold mb-4">
-              {t("Projets récents", "Recent Projects")}
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="overflow-hidden animate-pulse">
-                <div className="aspect-video bg-muted" />
-                <div className="p-6">
-                  <div className="h-6 bg-muted rounded mb-2 w-3/4" />
-                  <div className="h-4 bg-muted rounded mb-4 w-full" />
-                  <div className="flex gap-2">
-                    <div className="h-9 bg-muted rounded w-20" />
-                    <div className="h-9 bg-muted rounded w-20" />
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
+    ? demoProjects 
+    : demoProjects.filter(p => p.category === filter);
 
   return (
     <section id="projects" className="py-20 md:py-24 px-4 md:px-8 bg-muted/30">

@@ -1,9 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Code2, Palette, Smartphone, Database, Search, Zap, LucideIcon } from "lucide-react";
-import { servicesAPI } from "@/lib/api";
-import type { Service } from "@shared/schema";
 
 const iconMap: Record<string, LucideIcon> = {
   "Code2": Code2,
@@ -17,12 +14,8 @@ const iconMap: Record<string, LucideIcon> = {
 export function Services() {
   const { t, language } = useLanguage();
 
-  const { data: fetchedServices, isLoading } = useQuery({
-    queryKey: ["/api/services"],
-    queryFn: servicesAPI.getAll,
-  });
-
-  const demoServices: (Service & { icon: string | LucideIcon })[] = [
+  // Données statiques
+  const demoServices = [
     {
       icon: Code2,
       titleFr: "Développement Web",
@@ -67,31 +60,6 @@ export function Services() {
     },
   ];
 
-  const services: (Service & { icon: string | LucideIcon })[] = fetchedServices && fetchedServices.length > 0 ? fetchedServices : demoServices;
-
-  if (isLoading) {
-    return (
-      <section id="services" className="py-20 md:py-24 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold mb-4">
-              {t("Services", "Services")}
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="p-6 animate-pulse">
-                <div className="w-12 h-12 rounded-lg bg-muted mb-4" />
-                <div className="h-6 bg-muted rounded mb-2 w-3/4" />
-                <div className="h-4 bg-muted rounded w-full" />
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section id="services" className="py-20 md:py-24 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
@@ -108,7 +76,7 @@ export function Services() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {services.map((service, index) => {
+          {demoServices.map((service, index) => {
             const IconComponent = typeof service.icon === "string" 
               ? (iconMap[service.icon] || Code2) 
               : service.icon;

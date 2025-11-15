@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Mail } from "lucide-react";
-import { newsletterAPI } from "@/lib/api";
 
 export function Newsletter() {
   const { t } = useLanguage();
@@ -17,8 +16,9 @@ export function Newsletter() {
     setIsSubmitting(true);
 
     try {
-      await newsletterAPI.subscribe({ email });
-      
+      // Simuler un succès
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       toast({
         title: t("Abonnement confirmé !", "Subscription confirmed!"),
         description: t(

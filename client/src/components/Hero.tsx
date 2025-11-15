@@ -1,7 +1,7 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Github, Linkedin, Mail } from "lucide-react";
-import headshotImage from "@assets/generated_images/Professional_developer_headshot_portrait_cf6cd3c7.png";
+import headshotImage from "@/assets/generated_images/Professional_developer_headshot_portrait_cf6cd3c7.png";
 
 export function Hero() {
   const { t } = useLanguage();
