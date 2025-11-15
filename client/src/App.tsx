@@ -11,6 +11,7 @@ import BlogPage from "@/pages/BlogPage";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
 import NotFound from "@/pages/not-found";
+import ProjectsAdmin from "@/pages/ProjectsAdmin";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
+      <Route path="/admin/projects" component={ProjectsAdmin} />
     </Switch>
   );
 }

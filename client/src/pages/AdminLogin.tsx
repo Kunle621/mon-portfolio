@@ -14,7 +14,7 @@ export default function AdminLogin() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",  // Changé de "username" à "email"
     password: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,22 +25,31 @@ export default function AdminLogin() {
 
     try {
       const { authAPI } = await import("@/lib/api");
-      const response = await authAPI.login(formData);
+      const response = await authAPI.login({
+        email: formData.email,
+        password: formData.password,
+      });
       
       toast({
         title: t("Connexion réussie", "Login successful"),
         description: t("Bienvenue !", "Welcome!"),
       });
 
+      // Mets à jour l'authentification
       login(response.admin, response.token);
-      setLocation("/admin");
+
+      // Redirige après un court délai pour être sûr que le contexte est mis à jour
+      setTimeout(() => {
+        setLocation("/admin");
+      }, 100);
+
     } catch (error) {
       toast({
         variant: "destructive",
         title: t("Erreur de connexion", "Login error"),
         description: t(
-          "Nom d'utilisateur ou mot de passe incorrect.",
-          "Incorrect username or password."
+          "Email ou mot de passe incorrect.",
+          "Incorrect email or password."
         ),
       });
     } finally {
@@ -65,17 +74,17 @@ export default function AdminLogin() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium mb-2">
-              {t("Nom d'utilisateur", "Username")}
+            <label htmlFor="email" className="block text-sm font-medium mb-2">
+              {t("Email", "Email")}
             </label>
             <Input
-              id="username"
-              type="text"
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
-              placeholder={t("Entrez votre nom d'utilisateur", "Enter your username")}
-              data-testid="input-username"
+              placeholder={t("Entrez votre email", "Enter your email")}
+              data-testid="input-email"
             />
           </div>
 
