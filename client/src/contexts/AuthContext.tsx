@@ -1,60 +1,77 @@
-import { createContext, useContext, useState, useEffect } from "react";
+// src/contexts/AuthContext.tsx
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-// Type simplifié pour Admin (car tu n'as pas @shared/schema)
-interface Admin {
+export interface Admin {
+  id: string;
   email: string;
 }
 
 interface AuthContextType {
   admin: Admin | null;
   token: string | null;
+  isAuthenticated: boolean;
+  isReady: boolean;
   login: (admin: Admin, token: string) => void;
   logout: () => void;
-  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [admin, setAdmin] = useState<Admin | null>(() => {
-    const stored = localStorage.getItem("auth_admin");
-    return stored ? JSON.parse(stored) : null;
-  });
+const ADMIN_KEY = "admin";
+const TOKEN_KEY = "adminToken";
 
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem("auth_token");
-  });
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [admin, setAdmin] = useState<Admin | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (token) localStorage.setItem("auth_token", token);
-    else localStorage.removeItem("auth_token");
-  }, [token]);
+    const storedAdmin = localStorage.getItem(ADMIN_KEY);
+    const storedToken = localStorage.getItem(TOKEN_KEY);
 
-  useEffect(() => {
-    if (admin) localStorage.setItem("auth_admin", JSON.stringify(admin));
-    else localStorage.removeItem("auth_admin");
-  }, [admin]);
+    if (storedAdmin && storedToken) {
+      try {
+        const parsed = JSON.parse(storedAdmin);
+        if (parsed?.email && parsed?.id) {
+          setAdmin(parsed);
+          setToken(storedToken);
+        }
+      } catch (e) {
+        console.warn("Données d'auth corrompues, nettoyage...");
+        localStorage.removeItem(ADMIN_KEY);
+        localStorage.removeItem(TOKEN_KEY);
+      }
+    }
+    setLoaded(true);
+  }, []);
 
   const login = (adminData: Admin, authToken: string) => {
     setAdmin(adminData);
     setToken(authToken);
+    localStorage.setItem(ADMIN_KEY, JSON.stringify(adminData));
+    localStorage.setItem(TOKEN_KEY, authToken);
   };
 
   const logout = () => {
     setAdmin(null);
     setToken(null);
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_admin");
+    localStorage.removeItem(ADMIN_KEY);
+    localStorage.removeItem(TOKEN_KEY);
   };
+
+  if (!loaded) {
+    return null; // évite le flash de non-connecté
+  }
 
   return (
     <AuthContext.Provider
       value={{
         admin,
         token,
+        isAuthenticated: !!admin && !!token,
+        isReady: loaded,
         login,
         logout,
-        isAuthenticated: !!token && !!admin,
       }}
     >
       {children}
@@ -62,11 +79,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
-}
+};

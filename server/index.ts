@@ -1,34 +1,34 @@
+// server.ts
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
-import { projectRoutes } from "./routes/projects.js";
-import { contactRoutes } from "./routes/contact.js";
-import { newsletterRoutes } from "./routes/newsletter.js";
-import { adminRoutes } from "./routes/admin.js";
-import { Admin } from "./models/Admin.js";
+import { projectRoutes } from "./routes/projects";
+import { contactRoutes } from "./routes/contact";
+import { newsletterRoutes } from "./routes/newsletter";
+import { adminRoutes } from "./routes/admin"; // ✅ ajouté
+import { Admin } from "./models/Admin"; // ✅ ajouté
 import bcrypt from "bcryptjs";
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // Connexion MongoDB
-mongoose.connect(process.env.MONGODB_URI!)
+mongoose
+  .connect(process.env.MONGODB_URI!)
   .then(async () => {
     console.log("✅ MongoDB connecté");
-
-    // Seeder : créer l'admin si aucun admin n'existe
-    await seedAdmin();
+    await seedAdmin(); // ✅ décommenté
   })
-  .catch(err => console.error("❌ MongoDB erreur:", err));
+  .catch((err) => console.error("❌ MongoDB erreur:", err));
 
-// Fonction pour créer l'admin
+// Fonction pour créer l'admin au démarrage
 async function seedAdmin() {
   const count = await Admin.countDocuments();
   if (count === 0) {
@@ -48,7 +48,7 @@ async function seedAdmin() {
 app.use("/api/projects", projectRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/newsletter", newsletterRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminRoutes); // ✅ ajoutée ici
 
 // Route de test
 app.get("/api/test", (req, res) => {

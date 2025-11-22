@@ -1,20 +1,33 @@
-import mongoose from "mongoose";
+// models/Admin.ts
+import { Schema, model, Document } from "mongoose";
 import bcrypt from "bcryptjs";
 
-const adminSchema = new mongoose.Schema({
-  email: { type: String, unique: true },
-  password: String,
-});
+export interface IAdmin extends Document {
+  email: string;
+  password: string;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
 
-adminSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  
-  // Correction : vérifie que this.password est défini avant de le hasher
-  if (this.password) {
-    this.password = await bcrypt.hash(this.password, 10);
-  }
-  
-  next();
-});
+const adminSchema = new Schema<IAdmin>(
+  {
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
-export const Admin = mongoose.model("Admin", adminSchema);
+adminSchema.methods.comparePassword = async function (
+  candidatePassword: string
+): Promise<boolean> {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+
+export const Admin = model<IAdmin>("Admin", adminSchema);
