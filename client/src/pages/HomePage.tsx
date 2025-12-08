@@ -17,7 +17,7 @@ export default function HomePage() {
         <About />
         <Projects />
         <Services />
-        <Testimonials />
+       {/*  <Testimonials /> */}
         <Contact />
         <Newsletter />
       </main>

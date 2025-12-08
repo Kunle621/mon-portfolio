@@ -9,13 +9,11 @@ import { ProfileData, SkillData } from "@/types";
 export function About() {
   const { t, language } = useLanguage();
 
-  // ✅ CORRECTION 1 : Utilisation de () => profileAPI.get()
   const { data: profile } = useQuery<ProfileData>({ 
     queryKey: ["profile"], 
     queryFn: () => profileAPI.get() 
   });
   
-  // ✅ CORRECTION 2 : Utilisation de () => skillsAPI.getAll()
   const { data: skills } = useQuery<SkillData[]>({ 
     queryKey: ["skills"], 
     queryFn: () => skillsAPI.getAll() 
@@ -28,6 +26,8 @@ export function About() {
 
   if (!profile) return null;
 
+  const bioHtml = language === "fr" ? profile.bioFr : profile.bioEn;
+
   return (
     <section id="about" className="py-20 md:py-24 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
@@ -39,18 +39,17 @@ export function About() {
         
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div className="space-y-6">
-            <div className="prose prose-lg dark:prose-invert max-w-none">
-              <p className="text-base md:text-lg leading-relaxed whitespace-pre-wrap">
-                {language === 'fr' ? profile.bioFr : profile.bioEn}
-              </p>
-            </div>
+            <div 
+              className="prose prose-lg dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: bioHtml || "" }}
+            />
 
             {profile.cvUrl && (
                 <Button size="lg" variant="outline" className="h-12" asChild>
-                <a href={profile.cvUrl} target="_blank" rel="noopener noreferrer">
+                  <a href={profile.cvUrl} target="_blank" rel="noopener noreferrer">
                     <Download className="mr-2 h-5 w-5" />
                     {t("Télécharger mon CV", "Download CV")}
-                </a>
+                  </a>
                 </Button>
             )}
           </div>
@@ -61,10 +60,10 @@ export function About() {
               {skills?.map((skill, index) => {
                 const Icon = getIcon(skill.icon);
                 return (
-                    <div key={index} className="p-4 rounded-lg border border-card-border bg-card flex flex-col items-center text-center">
+                  <div key={index} className="p-4 rounded-lg border border-card-border bg-card flex flex-col items-center text-center">
                     <Icon className={`h-8 w-8 mb-3 ${skill.color || 'text-primary'}`} />
                     <h4 className="font-medium text-sm">{skill.name}</h4>
-                    </div>
+                  </div>
                 );
               })}
             </div>

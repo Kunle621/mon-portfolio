@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,24 +6,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, MapPin, Phone } from "lucide-react";
+import { contactAPI, profileAPI } from "@/lib/api"; // ✅ Import pour envoyer le formulaire et récupérer profil
+import { useQuery } from "@tanstack/react-query";
+import { ProfileData } from "@/types";
 
 export function Contact() {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
-  });
+
+  // Formulaire de contact
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // --- Récupération du profil ---
+  const { data: profile } = useQuery<ProfileData>({
+    queryKey: ["profile"],
+    queryFn: () => profileAPI.get(),
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Simuler un succès
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await contactAPI.submit(formData);
 
       toast({
         title: t("Message envoyé !", "Message sent!"),
@@ -34,7 +40,7 @@ export function Contact() {
       });
 
       setFormData({ name: "", email: "", message: "" });
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: t("Erreur", "Error"),
@@ -64,6 +70,7 @@ export function Contact() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+          {/* Formulaire de contact */}
           <div>
             <Card className="p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -77,7 +84,6 @@ export function Contact() {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                     placeholder={t("Votre nom", "Your name")}
-                    data-testid="input-contact-name"
                   />
                 </div>
 
@@ -92,7 +98,6 @@ export function Contact() {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
                     placeholder={t("votre@email.com", "your@email.com")}
-                    data-testid="input-contact-email"
                   />
                 </div>
 
@@ -107,7 +112,6 @@ export function Contact() {
                     required
                     placeholder={t("Parlez-moi de votre projet...", "Tell me about your project...")}
                     rows={6}
-                    data-testid="textarea-contact-message"
                   />
                 </div>
 
@@ -116,7 +120,6 @@ export function Contact() {
                   size="lg"
                   className="w-full h-12"
                   disabled={isSubmitting}
-                  data-testid="button-contact-submit"
                 >
                   {isSubmitting
                     ? t("Envoi en cours...", "Sending...")
@@ -126,69 +129,71 @@ export function Contact() {
             </Card>
           </div>
 
+          {/* Informations de contact dynamiques */}
           <div className="space-y-6">
             <div>
               <h3 className="text-2xl font-heading font-semibold mb-6">
                 {t("Informations de contact", "Contact Information")}
               </h3>
               <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Mail className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">Email</div>
-                    <a
-                      href="mailto:contact@example.com"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      contact@example.com
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Phone className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">Téléphone</div>
-                    <a
-                      href="tel:+33123456789"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      +33 1 23 45 67 89
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">
-                      {t("Localisation", "Location")}
+                {/* Email */}
+                {profile?.email && (
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Mail className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="text-muted-foreground">
-                      Paris, France
+                    <div>
+                      <div className="font-medium mb-1">Email</div>
+                      <a
+                        href={`mailto:${profile.email}`}
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {profile.email}
+                      </a>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* Téléphone */}
+                {profile?.phone && (
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Phone className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <div className="font-medium mb-1">Téléphone</div>
+                      <a
+                        href={`tel:${profile.phone}`}
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {profile.phone}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Localisation */}
+                {profile?.location && (
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <div className="font-medium mb-1">{t("Localisation", "Location")}</div>
+                      <div className="text-muted-foreground">{profile.location}</div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            <Card className="p-6 bg-primary/5 border-primary/20">
-              <h4 className="font-semibold mb-2">
-                {t("Disponibilité", "Availability")}
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                {t(
-                  "Actuellement disponible pour de nouveaux projets. Réponse généralement sous 24h.",
-                  "Currently available for new projects. Response typically within 24h."
-                )}
-              </p>
-            </Card>
+            {/* Disponibilité */}
+            {profile?.availability && (
+              <Card className="p-6 bg-primary/5 border-primary/20">
+                <h4 className="font-semibold mb-2">{t("Disponibilité", "Availability")}</h4>
+                <p className="text-sm text-muted-foreground">{profile.availability}</p>
+              </Card>
+            )}
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 // src/types/index.ts
 
 export interface ProfileData {
+  availability: string;
   _id?: string;
   name?: string;
   email?: string;
@@ -33,3 +34,19 @@ export interface SkillData {
   category: string;
   color?: string;
 }
+
+// src/types/index.ts
+export interface ProjectData {
+  _id?: string;
+  titleFr: string;
+  titleEn: string;
+  descriptionFr: string;
+  descriptionEn: string;
+  category: string;
+  imageUrl: string;
+  githubUrl?: string;
+  demoUrl?: string;
+  createdAt?: string;
+}
+
+

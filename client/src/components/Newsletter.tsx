@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Mail } from "lucide-react";
+import { newsletterAPI } from "@/lib/api"; // ✅ Import réel
 
 export function Newsletter() {
   const { t } = useLanguage();
@@ -16,8 +17,8 @@ export function Newsletter() {
     setIsSubmitting(true);
 
     try {
-      // Simuler un succès
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 🚀 Envoi réel au backend
+      await newsletterAPI.subscribe({ email });
 
       toast({
         title: t("Abonnement confirmé !", "Subscription confirmed!"),
@@ -28,11 +29,11 @@ export function Newsletter() {
       });
 
       setEmail("");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: t("Erreur", "Error"),
-        description: t(
+        description: error?.response?.data?.error || t(
           "Une erreur est survenue. Veuillez réessayer.",
           "An error occurred. Please try again."
         ),

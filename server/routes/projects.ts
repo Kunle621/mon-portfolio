@@ -1,6 +1,9 @@
 import express from "express";
 import { Project } from "../models/Project"; // Enlève le .js si tu utilises ts-node/tsx standard
 import { authenticateAdmin } from "../middleware/authAdmin";
+import cloudinary from "../cloudinary";
+import { upload } from "../middleware/upload";
+
 
 const router = express.Router();
 
@@ -32,6 +35,22 @@ router.delete("/:id", authenticateAdmin, async (req, res) => {
     res.json({ message: "Projet supprimé" });
   } catch (error) {
     res.status(500).json({ error: "Erreur lors de la suppression" });
+  }
+});
+
+// --- UPLOAD IMAGE POUR PROJET ---
+router.post("/upload-image", authenticateAdmin, upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "Aucun fichier envoyé" });
+
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: "portfolio/projects",
+    });
+
+    res.json({ imageUrl: result.secure_url });
+
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 });
 

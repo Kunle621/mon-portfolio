@@ -2,17 +2,19 @@
 
 const API_BASE = "http://localhost:5000/api";
 
-// --- Helper pour gérer les réponses et erreurs HTTP ---
+// --- Helper pour gérer les réponses HTTP ---
 const handleResponse = async (response: Response) => {
-  // On tente de parser le JSON, sinon on renvoie un objet vide pour éviter le crash
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || "Une erreur est survenue lors de la requête.");
+    throw new Error(data.error || "Une erreur est survenue.");
   }
 
   return data;
 };
+
+// --- Fonction utilitaire pour détecter FormData ---
+const isFormData = (data: any) => data instanceof FormData;
 
 // --- API générique ---
 const api = {
@@ -22,40 +24,52 @@ const api = {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     }).then(handleResponse),
 
-  post: (url: string, data: any, token?: string) =>
+  post: (url: string, data?: any, token?: string) =>
     fetch(`${API_BASE}${url}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(data),
+      headers: isFormData(data)
+        ? token
+          ? { Authorization: `Bearer ${token}` }
+          : {}
+        : {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+      body: isFormData(data) ? data : JSON.stringify(data),
     }).then(handleResponse),
 
-  patch: (url: string, data: any, token?: string) =>
+  patch: (url: string, data?: any, token?: string) =>
     fetch(`${API_BASE}${url}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(data),
+      headers: isFormData(data)
+        ? token
+          ? { Authorization: `Bearer ${token}` }
+          : {}
+        : {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+      body: isFormData(data) ? data : JSON.stringify(data),
+    }).then(handleResponse),
+
+  put: (url: string, data?: any, token?: string) =>
+    fetch(`${API_BASE}${url}`, {
+      method: "PUT",
+      headers: isFormData(data)
+        ? token
+          ? { Authorization: `Bearer ${token}` }
+          : {}
+        : {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+      body: isFormData(data) ? data : JSON.stringify(data),
     }).then(handleResponse),
 
   delete: (url: string, token?: string) =>
     fetch(`${API_BASE}${url}`, {
       method: "DELETE",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
-    }).then(handleResponse),
-
-  put: (url: string, data: any, token?: string) =>
-    fetch(`${API_BASE}${url}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(data),
     }).then(handleResponse),
 };
 
@@ -70,7 +84,7 @@ export const projectsAPI = {
   delete: (id: string, token: string) => api.delete(`/projects/${id}`, token),
 };
 
-// --- CONTACT (public) ---
+// --- CONTACT ---
 export const contactAPI = {
   submit: (data: any) => api.post("/contact", data),
 };
@@ -105,9 +119,15 @@ export const adminMessagesAPI = {
 
 // --- PROFILE ---
 export const profileAPI = {
-  // ✅ CORRECTION : Pas d'argument ici car c'est une route publique
   get: () => api.get("/profile"),
   update: (data: any, token: string) => api.put("/profile", data, token),
+
+  // ⭐ Routes upload Cloudinary
+  uploadHeadshot: (formData: FormData, token: string) =>
+    api.post("/profile/upload-headshot", formData, token),
+
+  uploadCV: (formData: FormData, token: string) =>
+    api.post("/profile/upload-cv", formData, token),
 };
 
 // --- SERVICES ---
