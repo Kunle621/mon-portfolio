@@ -1,53 +1,62 @@
+// src/pages/AdminRouter.tsx
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
+
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DashboardPage } from "@/components/admin/admin-pages/DashboardPage";
 import { ProjectsPage } from "@/components/admin/admin-pages/ProjectsPage";
 import { MessagesPage } from "@/components/admin/admin-pages/MessagesPage";
 import { NewsletterPage } from "@/components/admin/admin-pages/NewsletterPage";
 import { SettingsPage } from "@/components/admin/admin-pages/SettingsPage";
+import { ServicesSkillsPage } from "@/components/admin/admin-pages/ServicesSkillsPage"; // ✅ nouvelle page
 
 export default function AdminRouter() {
-  const { isAuthenticated, logout, isReady } = useAuth();
+  const { isAuthenticated, isReady } = useAuth();
   const [location, setLocation] = useLocation();
 
-  // Tant qu'on ne sait pas si on est authentifié, on ne fait rien
-  if (!isReady) {
-    return null;
-  }
+  // --- 1) On attend l'initialisation d'auth (évite clignotements) ---
+  if (!isReady) return null;
 
-  // Redirige /admin → /admin/dashboard
-  useEffect(() => {
-    if (location === "/admin") {
-      setLocation("/admin/dashboard");
-    }
-  }, [location, setLocation]);
-
-  // Redirige vers login si non authentifié
-  useEffect(() => {
-    if (!isAuthenticated) {
-      logout();
+  // --- 2) Si non connecté → redirection vers /admin/login ---
+  if (!isAuthenticated) {
+    if (location !== "/admin/login") {
       setLocation("/admin/login");
     }
-  }, [isAuthenticated, logout, setLocation]);
-
-  if (!isAuthenticated) {
     return null;
   }
 
-  switch (location) {
-    case "/admin/dashboard":
-      return <AdminLayout><DashboardPage /></AdminLayout>;
-    case "/admin/projects":
-      return <AdminLayout><ProjectsPage /></AdminLayout>;
-    case "/admin/messages":
-      return <AdminLayout><MessagesPage /></AdminLayout>;
-    case "/admin/newsletter":
-      return <AdminLayout><NewsletterPage /></AdminLayout>;
-    case "/admin/settings":
-      return <AdminLayout><SettingsPage /></AdminLayout>;
-    default:
-      return <AdminLayout><DashboardPage /></AdminLayout>;
+  // --- 3) Si connecté et exact /admin → redirect vers dashboard ---
+  if (location === "/admin" || location === "/admin/") {
+    setLocation("/admin/dashboard");
+    return null;
   }
+
+  // --- 4) Routage interne des pages admin ---
+  const getPageContent = () => {
+    switch (location) {
+      case "/admin/dashboard":
+        return <DashboardPage />;
+
+      case "/admin/projects":
+        return <ProjectsPage />;
+
+      case "/admin/messages":
+        return <MessagesPage />;
+
+      case "/admin/newsletter":
+        return <NewsletterPage />;
+
+      case "/admin/services":
+        return <ServicesSkillsPage />; // ✅ nouvelle route
+
+      case "/admin/settings":
+        return <SettingsPage />;
+
+      default:
+        return <DashboardPage />;
+    }
+  };
+
+  return <AdminLayout>{getPageContent()}</AdminLayout>;
 }

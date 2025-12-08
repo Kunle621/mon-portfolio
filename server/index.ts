@@ -6,6 +6,9 @@ import dotenv from "dotenv";
 import { projectRoutes } from "./routes/projects";
 import { contactRoutes } from "./routes/contact";
 import { newsletterRoutes } from "./routes/newsletter";
+import { profileRoutes } from "./routes/profile";
+import { serviceRoutes } from "./routes/services";
+import { skillRoutes } from "./routes/skills";
 import { adminRoutes } from "./routes/admin"; // ✅ ajouté
 import { Admin } from "./models/Admin"; // ✅ ajouté
 import bcrypt from "bcryptjs";
@@ -49,6 +52,9 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/admin", adminRoutes); // ✅ ajoutée ici
+app.use("/api/profile", profileRoutes);
+app.use("/api/services", serviceRoutes);
+app.use("/api/skills", skillRoutes);
 
 // Route de test
 app.get("/api/test", (req, res) => {

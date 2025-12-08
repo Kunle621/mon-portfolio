@@ -13,6 +13,7 @@ import {
   Mail,
   Settings,
   LogOut,
+  Zap // ✅ Ajout de l'icône
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -35,9 +36,10 @@ export function AdminSidebar({ unreadCount }: { unreadCount: number }) {
   };
 
   const menuItems: MenuItem[] = [
-    // ✅ CORRIGÉ : "/admin" → "/admin/dashboard"
     { icon: LayoutDashboard, labelFr: "Tableau de bord", labelEn: "Dashboard", href: "/admin/dashboard" },
     { icon: FolderKanban, labelFr: "Projets", labelEn: "Projects", href: "/admin/projects" },
+    // ✅ Ajout du menu Services & Skills
+    { icon: Zap, labelFr: "Services & Skills", labelEn: "Services & Skills", href: "/admin/services" },
     { icon: FileText, labelFr: "Blog", labelEn: "Blog", href: "/admin/blog" },
     { icon: MessageSquare, labelFr: "Messages", labelEn: "Messages", href: "/admin/messages", badge: unreadCount },
     { icon: Mail, labelFr: "Newsletter", labelEn: "Newsletter", href: "/admin/newsletter" },

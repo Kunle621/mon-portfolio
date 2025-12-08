@@ -1,6 +1,5 @@
 // src/App.tsx
 import { Switch, Route } from "wouter";
-import { useEffect, ReactNode } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,26 +13,24 @@ import AdminLogin from "@/pages/AdminLogin";
 import AdminRouter from "@/pages/AdminRouter";
 import NotFound from "@/pages/not-found";
 
-// 🔁 Composant de redirection pour /admin
-function AdminHomeRedirect(): null {
-  const [, setLocation] = require("wouter").useLocation();
-  useEffect(() => {
-    setLocation("/admin/dashboard");
-  }, [setLocation]);
-  return null;
-}
-
 function Router() {
   return (
     <Switch>
+      {/* Routes Publiques */}
       <Route path="/" component={HomePage} />
       <Route path="/blog" component={BlogPage} />
+      
+      {/* Route Login Admin (Doit être placée AVANT les autres routes admin) */}
       <Route path="/admin/login" component={AdminLogin} />
-      {/* ✅ Redirige /admin vers le dashboard */}
-      <Route path="/admin" component={AdminHomeRedirect} />
-      {/* ✅ Gère toutes les sous-routes admin */}
-      <Route path="/admin/*" component={AdminRouter} />
-      {/* ✅ Page 404 pour les routes inconnues */}
+
+      {/* 
+         Route Admin Globale 
+         Le motif "/admin/*?" capture "/admin" ET "/admin/n'importe-quoi"
+         C'est AdminRouter qui va décider si on redirige ou si on affiche le dashboard
+      */}
+      <Route path="/admin/*?" component={AdminRouter} />
+
+      {/* Page 404 */}
       <Route component={NotFound} />
     </Switch>
   );

@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 export interface IAdmin extends Document {
   email: string;
   password: string;
+  otp?: string;          // Nouveau : Code OTP temporaire
+  otpExpires?: Date;     // Nouveau : Expiration du code
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -20,6 +22,8 @@ const adminSchema = new Schema<IAdmin>(
       type: String,
       required: true,
     },
+    otp: { type: String },
+    otpExpires: { type: Date },
   },
   { timestamps: true }
 );
