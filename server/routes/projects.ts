@@ -1,44 +1,85 @@
 import express from "express";
-import { Project } from "../models/Project"; // Enlève le .js si tu utilises ts-node/tsx standard
+import { Project } from "../models/Project";
 import { authenticateAdmin } from "../middleware/authAdmin";
 import cloudinary from "../cloudinary";
 import { upload } from "../middleware/upload";
 
-
 const router = express.Router();
 
-// GET /api/projects (Public)
+/**
+ * GET /api/projects (Public)
+ * Option : ?category=web
+ */
 router.get("/", async (req, res) => {
   try {
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const { category } = req.query;
+
+    let filter: Record<string, any> = {};
+
+    if (category) {
+      filter.categories = category;
+    }
+
+    const projects = await Project.find(filter).sort({ createdAt: -1 });
     res.json(projects);
   } catch (error) {
-    res.status(500).json({ error: "Erreur serveur" });
+    const message = error instanceof Error ? error.message : "Erreur serveur inconnue";
+    res.status(500).json({ error: message });
   }
 });
 
-// POST /api/projects (Admin seulement)
+/**
+ * POST /api/projects (Admin)
+ */
 router.post("/", authenticateAdmin, async (req, res) => {
   try {
     const project = new Project(req.body);
     await project.save();
+
     res.status(201).json(project);
   } catch (error) {
-    res.status(400).json({ error: "Erreur création projet" });
+    const message = error instanceof Error ? error.message : "Erreur création projet";
+    res.status(400).json({ error: message });
   }
 });
 
-// DELETE /api/projects/:id (Admin seulement) - NOUVEAU
+/**
+ * PUT /api/projects/:id (Admin) -- AJOUTER CETTE ROUTE POUR L'ÉDITION
+ */
+router.put("/:id", authenticateAdmin, async (req, res) => {
+  try {
+    const project = await Project.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: "Projet non trouvé" });
+    }
+
+    res.json(project);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erreur mise à jour projet";
+    res.status(400).json({ error: message });
+  }
+});
+
+/**
+ * DELETE /api/projects/:id (Admin)
+ */
 router.delete("/:id", authenticateAdmin, async (req, res) => {
   try {
     await Project.findByIdAndDelete(req.params.id);
     res.json({ message: "Projet supprimé" });
   } catch (error) {
-    res.status(500).json({ error: "Erreur lors de la suppression" });
+    const message = error instanceof Error ? error.message : "Erreur lors de la suppression";
+    res.status(500).json({ error: message });
   }
 });
 
-// --- UPLOAD IMAGE POUR PROJET ---
+/**
+ * POST /api/projects/upload-image
+ */
 router.post("/upload-image", authenticateAdmin, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "Aucun fichier envoyé" });
@@ -48,9 +89,9 @@ router.post("/upload-image", authenticateAdmin, upload.single("image"), async (r
     });
 
     res.json({ imageUrl: result.secure_url });
-
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erreur inconnue";
+    res.status(500).json({ error: message });
   }
 });
 

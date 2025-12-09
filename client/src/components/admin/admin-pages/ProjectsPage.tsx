@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Trash2, Plus, Link as LinkIcon, Github, Image as ImageIcon } from "lucide-react";
+import { Trash2, Plus, Link as LinkIcon, Github, Image as ImageIcon, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const CATEGORIES = ["web", "mobile", "deeplearning", "datascience"];
 
 export function ProjectsPage() {
   const { t, language } = useLanguage();
@@ -16,136 +18,249 @@ export function ProjectsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const [isCreating, setIsCreating] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
-  const initialFormState = {
-    titleFr: "", titleEn: "",
-    descriptionFr: "", descriptionEn: "",
-    category: "", githubUrl: "", demoUrl: ""
+  const emptyForm = {
+    titleFr: "",
+    titleEn: "",
+    descriptionFr: "",
+    descriptionEn: "",
+    categories: [] as string[],
+    githubUrl: "",
+    demoUrl: "",
+    imageUrl: "",
   };
-  const [newProject, setNewProject] = useState(initialFormState);
+  const [formData, setFormData] = useState(emptyForm);
 
-  // --- Récupération des projets ---
+  // --- Fetch projects ---
   const { data: projects, isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: projectsAPI.getAll,
   });
 
-  // --- Création d'un projet ---
+  // --- CREATE mutation ---
   const createMutation = useMutation({
     mutationFn: async () => {
-      let imageUrl = "";
+      let uploadedImageUrl = formData.imageUrl;
 
       if (imageFile) {
-        const formData = new FormData();
-        formData.append("image", imageFile);
-        const res = await projectsAPI.uploadImage(formData, token!);
-        imageUrl = res.imageUrl;
+        const fd = new FormData();
+        fd.append("image", imageFile);
+        const res = await projectsAPI.uploadImage(fd, token!);
+        uploadedImageUrl = res.imageUrl;
       }
 
-      return projectsAPI.create({ ...newProject, imageUrl }, token!);
+      return projectsAPI.create({ ...formData, imageUrl: uploadedImageUrl }, token!);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      setIsCreating(false);
-      setNewProject(initialFormState);
-      setImageFile(null);
+      resetForm();
       toast({ title: t("Succès", "Success"), description: t("Projet créé !", "Project created!") });
     },
-    onError: () => {
-      toast({ variant: "destructive", title: t("Erreur", "Error"), description: t("Impossible de créer le projet", "Could not create project") });
-    }
   });
 
-  // --- Suppression ---
+  // --- UPDATE mutation ---
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingProjectId) return;
+
+      let uploadedImageUrl = formData.imageUrl;
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append("image", imageFile);
+        const res = await projectsAPI.uploadImage(fd, token!);
+        uploadedImageUrl = res.imageUrl;
+      }
+
+      return projectsAPI.update(editingProjectId, { ...formData, imageUrl: uploadedImageUrl }, token!);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      resetForm();
+      toast({ title: t("Succès", "Success"), description: t("Projet modifié !", "Project updated!") });
+    },
+  });
+
+  // --- DELETE mutation ---
   const deleteMutation = useMutation({
     mutationFn: (id: string) => projectsAPI.delete(id, token!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      toast({ title: t("Succès", "Success"), description: t("Projet supprimé", "Project deleted") });
+      toast({ title: t("Supprimé", "Deleted"), description: t("Projet supprimé", "Project deleted") });
     },
   });
 
+  // --- Reset form ---
+  const resetForm = () => {
+    setFormData(emptyForm);
+    setEditingProjectId(null);
+    setImageFile(null);
+  };
+
+  // --- Submit handler ---
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate();
+    editingProjectId ? updateMutation.mutate() : createMutation.mutate();
+  };
+
+  // --- Start editing ---
+  const startEditing = (project: any) => {
+    setFormData({
+      titleFr: project.titleFr,
+      titleEn: project.titleEn,
+      descriptionFr: project.descriptionFr,
+      descriptionEn: project.descriptionEn,
+      categories: project.categories || [],
+      githubUrl: project.githubUrl || "",
+      demoUrl: project.demoUrl || "",
+      imageUrl: project.imageUrl || "",
+    });
+
+    setEditingProjectId(project._id);
+    setIsFormOpen(true);
   };
 
   return (
     <div className="p-6 space-y-6">
+      {/* HEADER */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">{t("Gestion des projets", "Projects Management")}</h1>
-        <Button onClick={() => setIsCreating(!isCreating)}>
-          <Plus className="mr-2 h-4 w-4" /> {isCreating ? t("Fermer", "Close") : t("Ajouter", "Add New")}
+        <Button onClick={() => setIsFormOpen(prev => !prev)}>
+          <Plus className="mr-2 h-4 w-4" /> {isFormOpen ? t("Fermer", "Close") : t("Ajouter", "Add")}
         </Button>
       </div>
 
-      {/* Formulaire d'ajout */}
-      {isCreating && (
+      {/* FORM */}
+      {isFormOpen && (
         <Card className="p-6 border-primary/20 bg-muted/10 animate-in slide-in-from-top-2">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <h3 className="font-semibold text-sm uppercase text-muted-foreground">Contenu Bilingue</h3>
+
+            {/* TITLES */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input placeholder="Titre (Français)" value={newProject.titleFr} onChange={e => setNewProject({ ...newProject, titleFr: e.target.value })} required />
-              <Input placeholder="Title (English)" value={newProject.titleEn} onChange={e => setNewProject({ ...newProject, titleEn: e.target.value })} required />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Textarea placeholder="Description (Français)" value={newProject.descriptionFr} onChange={e => setNewProject({ ...newProject, descriptionFr: e.target.value })} required />
-              <Textarea placeholder="Description (English)" value={newProject.descriptionEn} onChange={e => setNewProject({ ...newProject, descriptionEn: e.target.value })} required />
+              <Input required placeholder="Titre FR" value={formData.titleFr}
+                onChange={e => setFormData({ ...formData, titleFr: e.target.value })} />
+              <Input required placeholder="Title EN" value={formData.titleEn}
+                onChange={e => setFormData({ ...formData, titleEn: e.target.value })} />
             </div>
 
-            <h3 className="font-semibold text-sm uppercase text-muted-foreground mt-4">Détails</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input placeholder="Catégorie" value={newProject.category} onChange={e => setNewProject({ ...newProject, category: e.target.value })} />
-              <Input type="file" accept="image/*" onChange={e => setImageFile(e.target.files ? e.target.files[0] : null)} />
-              <div className="flex gap-2">
-                <Input placeholder="GitHub URL" value={newProject.githubUrl} onChange={e => setNewProject({ ...newProject, githubUrl: e.target.value })} />
-                <Input placeholder="Demo URL" value={newProject.demoUrl} onChange={e => setNewProject({ ...newProject, demoUrl: e.target.value })} />
+            {/* DESCRIPTIONS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Textarea required placeholder="Description FR" value={formData.descriptionFr}
+                onChange={e => setFormData({ ...formData, descriptionFr: e.target.value })} />
+              <Textarea required placeholder="Description EN" value={formData.descriptionEn}
+                onChange={e => setFormData({ ...formData, descriptionEn: e.target.value })} />
+            </div>
+
+            {/* CATEGORIES */}
+            <div>
+              <label className="font-semibold">Catégories :</label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {CATEGORIES.map(cat => (
+                  <label key={cat} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={formData.categories.includes(cat)}
+                      onChange={() => {
+                        setFormData(prev =>
+                          prev.categories.includes(cat)
+                            ? { ...prev, categories: prev.categories.filter(c => c !== cat) }
+                            : { ...prev, categories: [...prev.categories, cat] }
+                        );
+                      }}
+                    />
+                    {cat}
+                  </label>
+                ))}
               </div>
             </div>
 
+            {/* LINKS + IMAGE */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input placeholder="GitHub URL" value={formData.githubUrl}
+                onChange={e => setFormData({ ...formData, githubUrl: e.target.value })} />
+
+              <Input placeholder="Demo URL" value={formData.demoUrl}
+                onChange={e => setFormData({ ...formData, demoUrl: e.target.value })} />
+
+              <Input type="file" accept="image/*"
+                onChange={e => setImageFile(e.target.files?.[0] || null)} />
+            </div>
+
+            {/* ACTIONS */}
             <div className="flex justify-end gap-2 mt-4">
-              <Button type="button" variant="ghost" onClick={() => setIsCreating(false)}>{t("Annuler", "Cancel")}</Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "..." : t("Enregistrer", "Save")}
+              <Button type="button" variant="ghost" onClick={() => { resetForm(); setIsFormOpen(false); }}>{t("Annuler", "Cancel")}</Button>
+              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                {editingProjectId ? t("Modifier", "Update") : t("Créer", "Create")}
               </Button>
             </div>
           </form>
         </Card>
       )}
 
-      {/* Liste des projets */}
+      {/* LIST */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {isLoading ? <p>{t("Chargement...", "Loading...")}</p> :
+        {isLoading ? (
+          <p>{t("Chargement...", "Loading...")}</p>
+        ) : (
           projects?.map((project: any) => (
-            <Card key={project._id} className="overflow-hidden flex flex-col group relative hover:shadow-md transition-all">
-              <div className="h-40 w-full bg-muted relative flex items-center justify-center overflow-hidden">
+            <Card key={project._id} className="relative p-3 flex flex-col">
+              {/* IMAGE */}
+              <div className="h-40 bg-muted flex items-center justify-center">
                 {project.imageUrl ? (
-                  <img src={project.imageUrl} alt="Project" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                  <img className="w-full h-full object-cover" src={project.imageUrl} />
                 ) : (
-                  <ImageIcon className="w-10 h-10 text-muted-foreground opacity-50" />
+                  <ImageIcon className="w-10 h-10 text-muted-foreground" />
                 )}
               </div>
-              <div className="p-4 flex flex-col gap-2 flex-1">
-                <h3 className="font-bold text-lg">{language === 'fr' ? project.titleFr : project.titleEn}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2">{language === 'fr' ? project.descriptionFr : project.descriptionEn}</p>
-                <div className="mt-auto pt-3 flex items-center gap-2 border-t">
-                  {project.githubUrl && <a href={project.githubUrl} target="_blank" className="p-2 bg-muted rounded hover:bg-primary hover:text-white transition-colors"><Github className="w-4 h-4"/></a>}
-                  {project.demoUrl && <a href={project.demoUrl} target="_blank" className="p-2 bg-muted rounded hover:bg-primary hover:text-white transition-colors"><LinkIcon className="w-4 h-4"/></a>}
-                  {project.category && <span className="ml-auto text-xs font-mono bg-primary/10 text-primary px-2 py-1 rounded">{project.category}</span>}
-                </div>
+
+              {/* CONTENT */}
+              <h3 className="mt-3 font-bold text-lg">
+                {language === "fr" ? project.titleFr : project.titleEn}
+              </h3>
+
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {language === "fr" ? project.descriptionFr : project.descriptionEn}
+              </p>
+
+              {/* CATEGORIES */}
+              <div className="flex flex-wrap gap-1 mt-2">
+                {project.categories?.map((c: string) => (
+                  <span key={c} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                    {c}
+                  </span>
+                ))}
               </div>
-              <Button
-                variant="destructive" size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                onClick={() => { if(confirm(t("Supprimer ce projet ?", "Delete this project?"))) deleteMutation.mutate(project._id); }}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+
+              {/* LINKS */}
+              <div className="flex gap-2 mt-3">
+                {project.githubUrl && (
+                  <a href={project.githubUrl} target="_blank" className="p-2 bg-muted rounded">
+                    <Github className="w-4 h-4" />
+                  </a>
+                )}
+                {project.demoUrl && (
+                  <a href={project.demoUrl} target="_blank" className="p-2 bg-muted rounded">
+                    <LinkIcon className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+
+              {/* ACTIONS */}
+              <div className="flex justify-end gap-2 mt-4">
+                <Button size="icon" variant="outline"
+                  onClick={() => startEditing(project)}>
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button size="icon" variant="destructive"
+                  onClick={() => deleteMutation.mutate(project._id)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </Card>
           ))
-        }
+        )}
       </div>
     </div>
   );

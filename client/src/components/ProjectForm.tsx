@@ -12,6 +12,8 @@ interface ProjectFormProps {
   isSubmitting?: boolean;
 }
 
+const allowedCategories = ["web", "mobile", "deeplearning", "datascience"];
+
 export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -20,7 +22,7 @@ export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
     titleEn: "",
     descriptionFr: "",
     descriptionEn: "",
-    category: "web",
+    categories: ["web"], // tableau, correspond au schéma Mongoose
     imageUrl: "",
     githubUrl: "",
     demoUrl: "",
@@ -47,6 +49,7 @@ export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Titres */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">
@@ -72,6 +75,7 @@ export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
           </div>
         </div>
 
+        {/* Descriptions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">
@@ -97,19 +101,24 @@ export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
           </div>
         </div>
 
+        {/* Catégorie et image */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">
               {t("Catégorie", "Category")}
             </label>
             <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              value={formData.categories[0]} // toujours le premier élément du tableau
+              onChange={(e) =>
+                setFormData({ ...formData, categories: [e.target.value] }) // mettre à jour en tableau
+              }
               className="w-full p-2 border rounded-md bg-background text-foreground"
             >
-              <option value="web">Web</option>
-              <option value="mobile">Mobile</option>
-              <option value="api">API</option>
+              {allowedCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                </option>
+              ))}
             </select>
           </div>
           <div>
@@ -125,6 +134,7 @@ export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
           </div>
         </div>
 
+        {/* GitHub et Demo */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">
@@ -150,11 +160,8 @@ export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
           </div>
         </div>
 
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isSubmitting}
-        >
+        {/* Bouton submit */}
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? (
             t("Envoi...", "Sending...")
           ) : (

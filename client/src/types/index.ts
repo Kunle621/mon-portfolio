@@ -35,18 +35,15 @@ export interface SkillData {
   color?: string;
 }
 
-// src/types/index.ts
 export interface ProjectData {
   _id?: string;
   titleFr: string;
   titleEn: string;
   descriptionFr: string;
   descriptionEn: string;
-  category: string;
+  categories: string[];   
   imageUrl: string;
   githubUrl?: string;
   demoUrl?: string;
   createdAt?: string;
 }
-
-

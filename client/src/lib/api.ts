@@ -1,5 +1,7 @@
 // client/src/lib/api.ts
 
+import { ProjectData } from "@/types";
+
 const API_BASE = "http://localhost:5000/api";
 
 // --- Helper pour gérer les réponses HTTP ---
@@ -80,9 +82,21 @@ const api = {
 // --- PROJECTS ---
 export const projectsAPI = {
   getAll: () => api.get("/projects"),
-  create: (data: any, token: string) => api.post("/projects", data, token),
-  delete: (id: string, token: string) => api.delete(`/projects/${id}`, token),
+
+  create: (data: ProjectData, token: string) =>
+    api.post("/projects", data, token),
+
+  update: (id: string, data: ProjectData, token: string) =>
+    api.put(`/projects/${id}`, data, token),
+
+  delete: (id: string, token: string) =>
+    api.delete(`/projects/${id}`, token),
+
+  uploadImage: (formData: FormData, token: string) =>
+    api.post("/projects/upload-image", formData, token),
 };
+
+
 
 // --- CONTACT ---
 export const contactAPI = {
