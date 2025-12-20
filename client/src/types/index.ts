@@ -16,6 +16,10 @@ export interface ProfileData {
   githubUrl?: string;
   linkedinUrl?: string;
   twitterUrl?: string;
+  taglineFr?: string; 
+  taglineEn?: string; 
+  learningMessageFr?: string;
+  learningMessageEn?: string;
 }
 
 export interface ServiceData {
