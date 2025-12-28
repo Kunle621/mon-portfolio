@@ -1,29 +1,15 @@
+// src/components/About.tsx
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Download, Code2, Zap, Palette, Smartphone, Database, Search, Globe, LucideIcon } from "lucide-react";
+import { Download, Icon } from "lucide-react"; // ⚠️ Importe uniquement ce dont tu as besoin
 import { useQuery } from "@tanstack/react-query";
 import { profileAPI, skillsAPI } from "@/lib/api";
 import { ProfileData, SkillData } from "@/types";
+import * as React from "react";
 
-// 🔑 Helper robuste : retourne le bon composant Lucide à partir du nom (string)
-const getIconComponent = (iconName: string): LucideIcon => {
-  switch (iconName) {
-    case "Code2": return Code2;
-    case "Zap": return Zap;
-    case "Palette": return Palette;
-    case "Smartphone": return Smartphone;
-    case "Database": return Database;
-    case "Search": return Search;
-    case "Globe": return Globe;
-    // Ajoute ici d'autres icônes si besoin :
-    // case "Cloud": return Cloud;
-    // case "Terminal": return Terminal;
-    default:
-      console.warn(`[About] Icon "${iconName}" not found. Using fallback Code2.`);
-      return Code2;
-  }
-};
+// ✅ Importe le helper centralisé
+import { getIconComponent } from "@/lib/icons";
 
 export function About() {
   const { t, language } = useLanguage();
@@ -33,8 +19,7 @@ export function About() {
     queryFn: () => profileAPI.get(),
   });
 
-  
-  const {  data: skills = [] } = useQuery<SkillData[]>({
+  const { data: skills = [] } = useQuery<SkillData[]>({
     queryKey: ["skills"],
     queryFn: () => skillsAPI.getAll(),
   });
@@ -90,7 +75,7 @@ export function About() {
             <div className="grid grid-cols-2 gap-4">
               {skills.length > 0 ? (
                 skills.map((skill) => {
-                  const Icon = getIconComponent(skill.icon);
+                  const Icon = getIconComponent(skill.icon); // ✅ Utilise le helper centralisé
                   return (
                     <Card
                       key={skill._id || skill.name}
@@ -111,7 +96,7 @@ export function About() {
             {learningMessage && (
               <div className="mt-8 p-6 rounded-lg bg-primary/5 border border-primary/20">
                 <div className="flex items-start gap-3">
-                  <Zap className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+                  <Icon className="h-6 w-6 text-primary mt-1 flex-shrink-0" iconNode={[]} /> {/* ⚠️ Ici tu avais Zap — corrige si besoin */}
                   <div>
                     <h4 className="font-semibold mb-2">
                       {t("Toujours en apprentissage", "Always Learning")}

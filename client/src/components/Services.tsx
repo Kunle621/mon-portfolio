@@ -1,64 +1,44 @@
+// src/components/Services.tsx
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
-import { Code2, Palette, Smartphone, Database, Search, Zap, LucideIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { servicesAPI } from "@/lib/api";
+import { ServiceData } from "@/types";
+import * as LucideIcons from "lucide-react";
+import * as React from "react";
 
-const iconMap: Record<string, LucideIcon> = {
-  "Code2": Code2,
-  "Palette": Palette,
-  "Smartphone": Smartphone,
-  "Database": Database,
-  "Search": Search,
-  "Zap": Zap,
+// ✅ Helper pour récupérer une icône Lucide par son nom (string)
+const getIconComponent = (iconName: string) => {
+  const Icon = LucideIcons[iconName as keyof typeof LucideIcons];
+  return Icon || LucideIcons.Code2; // fallback sûr
 };
 
 export function Services() {
   const { t, language } = useLanguage();
 
-  // Données statiques
-  const demoServices = [
-    {
-      icon: Code2,
-      titleFr: "Développement Web",
-      titleEn: "Web Development",
-      descriptionFr: "Création d'applications web modernes avec React, Node.js et les dernières technologies",
-      descriptionEn: "Building modern web applications with React, Node.js and the latest technologies",
-    },
-    {
-      icon: Palette,
-      titleFr: "UI/UX Design",
-      titleEn: "UI/UX Design",
-      descriptionFr: "Design d'interfaces utilisateur élégantes et intuitives pour une expérience optimale",
-      descriptionEn: "Elegant and intuitive user interface design for optimal experience",
-    },
-    {
-      icon: Smartphone,
-      titleFr: "Applications Mobiles",
-      titleEn: "Mobile Applications",
-      descriptionFr: "Développement d'applications mobiles responsive et performantes",
-      descriptionEn: "Development of responsive and performant mobile applications",
-    },
-    {
-      icon: Database,
-      titleFr: "Backend & API",
-      titleEn: "Backend & API",
-      descriptionFr: "Architecture backend robuste et APIs RESTful sécurisées",
-      descriptionEn: "Robust backend architecture and secure RESTful APIs",
-    },
-    {
-      icon: Search,
-      titleFr: "SEO & Performance",
-      titleEn: "SEO & Performance",
-      descriptionFr: "Optimisation pour les moteurs de recherche et performances web",
-      descriptionEn: "Search engine optimization and web performance",
-    },
-    {
-      icon: Zap,
-      titleFr: "Consulting & Support",
-      titleEn: "Consulting & Support",
-      descriptionFr: "Conseil technique et support pour vos projets web",
-      descriptionEn: "Technical consulting and support for your web projects",
-    },
-  ];
+  // ✅ Récupère les services depuis l'API
+  const { data: services = [], isLoading, error } = useQuery<ServiceData[]>({
+    queryKey: ["services"],
+    queryFn: () => servicesAPI.getAll(),
+  });
+
+  if (isLoading) {
+    return (
+      <section id="services" className="py-20 md:py-24 px-4 md:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold mb-4">
+            {t("Services", "Services")}
+          </h2>
+          <p className="text-muted-foreground">{t("Chargement...", "Loading...")}</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    console.error("[Services] Failed to load:", error);
+    return null; // ou un fallback UI
+  }
 
   return (
     <section id="services" className="py-20 md:py-24 px-4 md:px-8">
@@ -76,27 +56,35 @@ export function Services() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {demoServices.map((service, index) => {
-            const IconComponent = typeof service.icon === "string" 
-              ? (iconMap[service.icon] || Code2) 
-              : service.icon;
-            
-            return (
-              <Card key={index} className="p-6 hover-elevate active-elevate-2 transition-all" data-testid={`service-${index}`}>
-                <div className="mb-4">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <IconComponent className="h-6 w-6 text-primary" />
+          {services.length > 0 ? (
+            services.map((service) => {
+              const IconComponent = getIconComponent(service.icon); // ✅ Toujours un composant valide
+
+              return (
+                <Card
+                  key={service._id}
+                  className="p-6 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                  data-testid={`service-${service._id}`}
+                >
+                  <div className="mb-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <IconComponent className="h-6 w-6 text-primary" />
+                    </div>
                   </div>
-                </div>
-                <h3 className="text-xl font-heading font-semibold mb-2">
-                  {language === "fr" ? service.titleFr : service.titleEn}
-                </h3>
-                <p className="text-muted-foreground">
-                  {language === "fr" ? service.descriptionFr : service.descriptionEn}
-                </p>
-              </Card>
-            );
-          })}
+                  <h3 className="text-xl font-heading font-semibold mb-2">
+                    {language === "fr" ? service.titleFr : service.titleEn}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {language === "fr" ? service.descriptionFr : service.descriptionEn}
+                  </p>
+                </Card>
+              );
+            })
+          ) : (
+            <p className="col-span-full text-center text-muted-foreground">
+              {t("Aucun service disponible pour le moment.", "No services available at the moment.")}
+            </p>
+          )}
         </div>
       </div>
     </section>
