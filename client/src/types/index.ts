@@ -51,3 +51,14 @@ export interface ProjectData {
   demoUrl?: string;
   createdAt?: string;
 }
+
+export interface ExperienceData {
+  _id?: string;
+  company: string;
+  position: string;
+  startDate: string;
+  endDate?: string;
+  description: string; // HTML
+  createdAt?: string;
+  updatedAt?: string;
+}

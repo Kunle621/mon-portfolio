@@ -13,7 +13,8 @@ import {
   Mail,
   Settings,
   LogOut,
-  Zap // ✅ Ajout de l'icône
+  Zap, // ✅ Ajout de l'icône
+  Briefcase // ✅ Ajout de l'icône pour expériences
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -40,6 +41,7 @@ export function AdminSidebar({ unreadCount }: { unreadCount: number }) {
     { icon: FolderKanban, labelFr: "Projets", labelEn: "Projects", href: "/admin/projects" },
     // ✅ Ajout du menu Services & Skills
     { icon: Zap, labelFr: "Services & Skills", labelEn: "Services & Skills", href: "/admin/services" },
+    { icon: Briefcase, labelFr: "Expériences", labelEn: "Experiences", href: "/admin/experiences" },
     { icon: FileText, labelFr: "Blog", labelEn: "Blog", href: "/admin/blog" },
     { icon: MessageSquare, labelFr: "Messages", labelEn: "Messages", href: "/admin/messages", badge: unreadCount },
     { icon: Mail, labelFr: "Newsletter", labelEn: "Newsletter", href: "/admin/newsletter" },

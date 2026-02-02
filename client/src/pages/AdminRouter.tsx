@@ -10,6 +10,7 @@ import { MessagesPage } from "@/components/admin/admin-pages/MessagesPage";
 import { NewsletterPage } from "@/components/admin/admin-pages/NewsletterPage";
 import { SettingsPage } from "@/components/admin/admin-pages/SettingsPage";
 import { ServicesSkillsPage } from "@/components/admin/admin-pages/ServicesSkillsPage"; // ✅ nouvelle page
+import { ExperiencesPage } from "@/components/admin/admin-pages/ExperiencesPage"; // ✅ nouvelle page
 
 export default function AdminRouter() {
   const { isAuthenticated, isReady } = useAuth();
@@ -49,6 +50,9 @@ export default function AdminRouter() {
 
       case "/admin/services":
         return <ServicesSkillsPage />; // ✅ nouvelle route
+
+      case "/admin/experiences":
+        return <ExperiencesPage />; // ✅ nouvelle route
 
       case "/admin/settings":
         return <SettingsPage />;

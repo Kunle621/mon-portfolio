@@ -10,6 +10,7 @@ import { profileRoutes } from "./routes/profile";
 import { serviceRoutes } from "./routes/services";
 import { skillRoutes } from "./routes/skills";
 import { adminRoutes } from "./routes/admin"; // ✅ ajouté
+import { experienceRoutes } from "./routes/experiences"; // ✅ ajouté
 import { Admin } from "./models/Admin"; // ✅ ajouté
 import bcrypt from "bcryptjs";
 
@@ -55,6 +56,7 @@ app.use("/api/admin", adminRoutes); // ✅ ajoutée ici
 app.use("/api/profile", profileRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/skills", skillRoutes);
+app.use("/api/experiences", experienceRoutes); // ✅ ajoutée ici
 
 // Route de test
 app.get("/api/test", (req, res) => {

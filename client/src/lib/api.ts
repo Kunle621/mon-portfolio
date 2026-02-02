@@ -1,6 +1,6 @@
 // client/src/lib/api.ts
 
-import { ProjectData } from "@/types";
+import { ProjectData, ExperienceData } from "@/types";
 
 const API_BASE = "http://localhost:5000/api";
 
@@ -156,4 +156,12 @@ export const skillsAPI = {
   getAll: () => api.get("/skills"),
   create: (data: any, token: string) => api.post("/skills", data, token),
   delete: (id: string, token: string) => api.delete(`/skills/${id}`, token),
+};
+
+// --- EXPERIENCES ---
+export const experiencesAPI = {
+  getAll: () => api.get("/experiences"),
+  create: (data: ExperienceData, token: string) => api.post("/experiences", data, token),
+  update: (id: string, data: ExperienceData, token: string) => api.put(`/experiences/${id}`, data, token),
+  delete: (id: string, token: string) => api.delete(`/experiences/${id}`, token),
 };

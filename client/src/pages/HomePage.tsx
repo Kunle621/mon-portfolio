@@ -1,6 +1,7 @@
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { About } from "@/components/About";
+import { Experiences } from "@/components/Experiences";
 import { Projects } from "@/components/Projects";
 import { Services } from "@/components/Services";
 /* import { Testimonials } from "@/components/Testimonials";*/
@@ -15,6 +16,7 @@ export default function HomePage() {
       <main>
         <Hero />
         <About />
+        <Experiences />
         <Projects />
         <Services />
        {/*  <Testimonials /> */}
