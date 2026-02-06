@@ -4,8 +4,13 @@ import { adminMessagesAPI } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Trash2, CheckCircle, Mail, Calendar } from "lucide-react";
+import { MessageSquare, Trash2, CheckCircle, Mail, Calendar, Reply } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 export function MessagesPage() {
   const { t } = useLanguage();
@@ -35,6 +40,40 @@ export function MessagesPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
     },
   });
+
+  const [replyDialog, setReplyDialog] = useState<{ open: boolean; messageId: string | null; recipient: string }>({
+    open: false,
+    messageId: null,
+    recipient: "",
+  });
+  const [replyData, setReplyData] = useState({ subject: "", message: "" });
+
+  const replyMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { subject: string; message: string } }) =>
+      adminMessagesAPI.reply(id, data, token!),
+    onSuccess: () => {
+      toast({ title: t("Réponse envoyée", "Reply sent") });
+      setReplyDialog({ open: false, messageId: null, recipient: "" });
+      setReplyData({ subject: "", message: "" });
+      queryClient.invalidateQueries({ queryKey: ["admin-messages"] });
+    },
+    onError: (error: any) => {
+      toast({ title: t("Erreur lors de l'envoi", "Error sending reply"), variant: "destructive" });
+    },
+  });
+
+  const handleReply = (message: any) => {
+    setReplyDialog({ open: true, messageId: message._id, recipient: message.email });
+    setReplyData({
+      subject: `Re: Message de ${message.name}`,
+      message: `Bonjour ${message.name},\n\nEn réponse à votre message :\n"${message.message}"\n\n`,
+    });
+  };
+
+  const submitReply = () => {
+    if (!replyDialog.messageId || !replyData.subject || !replyData.message) return;
+    replyMutation.mutate({ id: replyDialog.messageId, data: replyData });
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -84,6 +123,14 @@ export function MessagesPage() {
                 )}
                 <Button 
                   size="sm" 
+                  variant="default"
+                  onClick={() => handleReply(msg)}
+                >
+                  <Reply className="w-4 h-4 mr-2" />
+                  {t("Répondre", "Reply")}
+                </Button>
+                <Button 
+                  size="sm" 
                   variant="destructive"
                   onClick={() => { if(confirm(t("Supprimer définitivement ?", "Delete permanently?"))) deleteMutation.mutate(msg._id); }}
                 >
@@ -100,6 +147,57 @@ export function MessagesPage() {
           </div>
         )}
       </main>
+
+      {/* Modal de réponse */}
+      <Dialog open={replyDialog.open} onOpenChange={(open) => setReplyDialog({ ...replyDialog, open })}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{t("Répondre au message", "Reply to message")}</DialogTitle>
+            <DialogDescription>
+              {t("Envoyez une réponse personnalisée au message reçu.", "Send a personalized reply to the received message.")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="recipient">{t("Destinataire", "Recipient")}</Label>
+              <Input id="recipient" value={replyDialog.recipient} disabled />
+            </div>
+            <div>
+              <Label htmlFor="subject">{t("Sujet", "Subject")}</Label>
+              <Input
+                id="subject"
+                value={replyData.subject}
+                onChange={(e) => setReplyData({ ...replyData, subject: e.target.value })}
+                placeholder={t("Sujet de la réponse", "Reply subject")}
+              />
+            </div>
+            <div>
+              <Label htmlFor="message">{t("Message", "Message")}</Label>
+              <Textarea
+                id="message"
+                value={replyData.message}
+                onChange={(e) => setReplyData({ ...replyData, message: e.target.value })}
+                placeholder={t("Votre réponse...", "Your reply...")}
+                rows={8}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setReplyDialog({ open: false, messageId: null, recipient: "" })}
+              >
+                {t("Annuler", "Cancel")}
+              </Button>
+              <Button
+                onClick={submitReply}
+                disabled={replyMutation.isPending || !replyData.subject || !replyData.message}
+              >
+                {replyMutation.isPending ? t("Envoi...", "Sending...") : t("Envoyer", "Send")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

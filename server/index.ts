@@ -52,11 +52,11 @@ async function seedAdmin() {
 app.use("/api/projects", projectRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/newsletter", newsletterRoutes);
-app.use("/api/admin", adminRoutes); // ✅ ajoutée ici
+app.use("/api/admin", adminRoutes); 
 app.use("/api/profile", profileRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/skills", skillRoutes);
-app.use("/api/experiences", experienceRoutes); // ✅ ajoutée ici
+app.use("/api/experiences", experienceRoutes); 
 
 // Route de test
 app.get("/api/test", (req, res) => {

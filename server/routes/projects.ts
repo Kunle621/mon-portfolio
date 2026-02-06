@@ -88,6 +88,10 @@ router.post("/upload-image", authenticateAdmin, upload.single("image"), async (r
       folder: "portfolio/projects",
     });
 
+    // Supprimer le fichier local après upload
+    const fs = await import("fs");
+    fs.unlinkSync(req.file.path);
+
     res.json({ imageUrl: result.secure_url });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erreur inconnue";

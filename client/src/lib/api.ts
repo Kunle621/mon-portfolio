@@ -129,6 +129,8 @@ export const adminMessagesAPI = {
   markRead: (id: string, token: string) =>
     api.patch(`/contact/${id}/read`, {}, token),
   delete: (id: string, token: string) => api.delete(`/contact/${id}`, token),
+  reply: (id: string, data: { subject: string; message: string }, token: string) =>
+    api.post(`/contact/${id}/reply`, data, token),
 };
 
 // --- PROFILE ---
