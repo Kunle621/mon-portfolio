@@ -60,7 +60,8 @@ router.post("/upload-cv", authenticateAdmin, upload.single("cv"), async (req, re
     const result = await cloudinary.uploader.upload(req.file.path, {
       resource_type: "raw",
       folder: "portfolio/cv",
-      format: "pdf",
+      access_mode: "public", // ✅ Permet l'accès public
+      type: "upload", // ✅ Défini le type d'upload standard
     });
     fs.unlinkSync(req.file.path);
 
