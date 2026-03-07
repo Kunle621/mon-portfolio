@@ -1,8 +1,6 @@
 import express from "express";
 import { Project } from "../models/Project";
 import { authenticateAdmin } from "../middleware/authAdmin";
-import cloudinary from "../cloudinary";
-import { upload } from "../middleware/upload";
 
 const router = express.Router();
 
@@ -73,28 +71,6 @@ router.delete("/:id", authenticateAdmin, async (req, res) => {
     res.json({ message: "Projet supprimé" });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erreur lors de la suppression";
-    res.status(500).json({ error: message });
-  }
-});
-
-/**
- * POST /api/projects/upload-image
- */
-router.post("/upload-image", authenticateAdmin, upload.single("image"), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: "Aucun fichier envoyé" });
-
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "portfolio/projects",
-    });
-
-    // Supprimer le fichier local après upload
-    const fs = await import("fs");
-    fs.unlinkSync(req.file.path);
-
-    res.json({ imageUrl: result.secure_url });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Erreur inconnue";
     res.status(500).json({ error: message });
   }
 });
