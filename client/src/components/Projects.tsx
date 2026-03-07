@@ -25,6 +25,13 @@ export function Projects() {
     { value: "deeplearning", labelFr: "Deep Learning", labelEn: "Deep Learning" },
   ];
 
+  // --- URL Normalizer for Visitor view ---
+  const ensureAbsoluteUrl = (url: string) => {
+    if (!url) return "";
+    if (/^https?:\/\//i.test(url)) return url;
+    return `https://${url}`;
+  };
+
   // --- Filter projects by category ---
   const filteredProjects = !projects
     ? []
@@ -102,7 +109,7 @@ export function Projects() {
                 <div className="flex gap-2">
                   {project.githubUrl && (
                     <Button size="sm" variant="outline" asChild>
-                      <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
+                      <a href={ensureAbsoluteUrl(project.githubUrl)} target="_blank" rel="noopener noreferrer">
                         <Github className="h-4 w-4 mr-1" />
                         Code
                       </a>
@@ -110,7 +117,7 @@ export function Projects() {
                   )}
                   {project.demoUrl && (
                     <Button size="sm" asChild>
-                      <a href={project.demoUrl} target="_blank" rel="noopener noreferrer">
+                      <a href={ensureAbsoluteUrl(project.demoUrl)} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-4 w-4 mr-1" />
                         Demo
                       </a>

@@ -99,10 +99,32 @@ export function ProjectsPage() {
     setImageFile(null);
   };
 
+  // --- URL Normalization ---
+  const normalizeUrl = (url: string) => {
+    if (!url) return "";
+    let trimmed = url.trim();
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+      return `https://${trimmed}`;
+    }
+    return trimmed;
+  };
+
   // --- Submit handler ---
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    editingProjectId ? updateMutation.mutate() : createMutation.mutate();
+    
+    // Normalize URLs before sending to API
+    const normalizedData = {
+      ...formData,
+      githubUrl: normalizeUrl(formData.githubUrl),
+      demoUrl: normalizeUrl(formData.demoUrl),
+    };
+
+    setFormData(normalizedData); // Update UI state too
+
+    editingProjectId 
+      ? updateMutation.mutate() 
+      : createMutation.mutate();
   };
 
   // --- Start editing ---
@@ -178,14 +200,31 @@ export function ProjectsPage() {
 
             {/* LINKS + IMAGE */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input placeholder="GitHub URL" value={formData.githubUrl}
-                onChange={e => setFormData({ ...formData, githubUrl: e.target.value })} />
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground ml-1">GitHub URL (ex: github.com/user/repo)</label>
+                <Input 
+                  type="url"
+                  placeholder="GitHub URL" 
+                  value={formData.githubUrl}
+                  onChange={e => setFormData({ ...formData, githubUrl: e.target.value })} 
+                />
+              </div>
 
-              <Input placeholder="Demo URL" value={formData.demoUrl}
-                onChange={e => setFormData({ ...formData, demoUrl: e.target.value })} />
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground ml-1">Demo URL (ex: myproject.com)</label>
+                <Input 
+                  type="url"
+                  placeholder="Demo URL" 
+                  value={formData.demoUrl}
+                  onChange={e => setFormData({ ...formData, demoUrl: e.target.value })} 
+                />
+              </div>
 
-              <Input type="file" accept="image/*"
-                onChange={e => setImageFile(e.target.files?.[0] || null)} />
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground ml-1">Image du projet</label>
+                <Input type="file" accept="image/*"
+                  onChange={e => setImageFile(e.target.files?.[0] || null)} />
+              </div>
             </div>
 
             {/* ACTIONS */}
