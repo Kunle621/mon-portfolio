@@ -28,7 +28,7 @@ app.use("/uploads", express.static("uploads"));
 mongoose
   .connect(process.env.MONGODB_URI!)
   .then(async () => {
-    console.log("✅ MongoDB connecté");
+
     await seedAdmin(); // ✅ décommenté
   })
   .catch((err) => console.error("❌ MongoDB erreur:", err));
@@ -43,9 +43,9 @@ async function seedAdmin() {
       password: hashedPassword,
     });
     await admin.save();
-    console.log("🔐 Admin créé:", process.env.ADMIN_EMAIL);
+
   } else {
-    console.log("🔐 Admin existe déjà");
+
   }
 }
 
@@ -65,5 +65,5 @@ app.get("/api/test", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
+
 });

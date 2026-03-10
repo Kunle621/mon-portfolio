@@ -1,8 +1,17 @@
 import express from "express";
 import { Experience } from "../models/Experience";
 import { authenticateAdmin } from "../middleware/authAdmin";
+import { z } from "zod";
 
 const router = express.Router();
+
+const experienceSchema = z.object({
+  position: z.string().min(2, "Le poste doit contenir au moins 2 caractères"),
+  company: z.string().min(2, "L'entreprise doit contenir au moins 2 caractères"),
+  startDate: z.string().min(1, "La date de début est requise"),
+  endDate: z.string().optional(),
+  description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
+});
 
 /**
  * GET /api/experiences (Public)
@@ -24,24 +33,18 @@ router.get("/", async (req, res) => {
  */
 router.post("/", authenticateAdmin, async (req, res) => {
   try {
-    const { company, position, startDate, endDate, description } = req.body;
-
-    // Basic validation
-    if (!company || !position || !startDate || !description) {
-      return res.status(400).json({ error: "Champs requis manquants" });
-    }
+    const validatedData = experienceSchema.parse(req.body);
 
     const experience = new Experience({
-      company,
-      position,
-      startDate,
-      endDate,
-      description,
+      ...validatedData,
     });
 
     await experience.save();
     res.status(201).json(experience);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: (error as any).errors[0].message });
+    }
     const message = error instanceof Error ? error.message : "Erreur création expérience";
     res.status(400).json({ error: message });
   }
@@ -53,16 +56,12 @@ router.post("/", authenticateAdmin, async (req, res) => {
  */
 router.put("/:id", authenticateAdmin, async (req, res) => {
   try {
-    const { company, position, startDate, endDate, description } = req.body;
+    const validatedData = experienceSchema.parse(req.body);
 
     const experience = await Experience.findByIdAndUpdate(
       req.params.id,
       {
-        company,
-        position,
-        startDate,
-        endDate,
-        description,
+        ...validatedData,
         updatedAt: new Date(),
       },
       { new: true, runValidators: true }
@@ -74,6 +73,9 @@ router.put("/:id", authenticateAdmin, async (req, res) => {
 
     res.json(experience);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: (error as any).errors[0].message });
+    }
     const message = error instanceof Error ? error.message : "Erreur mise à jour expérience";
     res.status(400).json({ error: message });
   }

@@ -1,5 +1,7 @@
-// src/pages/AdminLogin.tsx
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, otpSchema, type LoginFormData, type OtpFormData } from "@/lib/validations";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -15,14 +17,28 @@ export default function AdminLogin() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  // État pour savoir à quelle étape on est : "credentials" (email/mdp) ou "otp" (code)
   const [step, setStep] = useState<"credentials" | "otp">("credentials");
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    otp: "",
+  const {
+    register: registerLogin,
+    handleSubmit: handleSubmitLogin,
+    formState: { errors: loginErrors }
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" }
   });
+
+  const {
+    register: registerOtp,
+    handleSubmit: handleSubmitOtp,
+    formState: { errors: otpErrors },
+    reset: resetOtp
+  } = useForm<OtpFormData>({
+    resolver: zodResolver(otpSchema),
+    defaultValues: { otp: "" }
+  });
+
+  const [savedEmail, setSavedEmail] = useState("");
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,65 +58,58 @@ export default function AdminLogin() {
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onLoginSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
-
     try {
-      // Import dynamique de l'API
       const { authAPI } = await import("@/lib/api");
+      const response = await authAPI.login({
+        email: data.email.trim(),
+        password: data.password,
+      });
 
-      // ─── CAS 1 : Envoi Email + Mot de passe ───
-      if (step === "credentials") {
-        console.log("📤 Étape 1 : Login avec", formData.email);
-        
-        const response = await authAPI.login({
-          email: formData.email.trim(),
-          password: formData.password,
-        });
-
-        // Si le backend demande l'OTP (comportement normal attendu)
-        if (response.requireOtp) {
-          toast({
-            title: t("Vérification requise", "Verification required"),
-            description: t(`Code envoyé à ${response.email}`, `Code sent to ${response.email}`),
-          });
-          setStep("otp"); // Passage à l'étape 2
-        } 
-        // Fallback : Si l'OTP est désactivé côté serveur et qu'on reçoit le token direct
-        else if (response.token) {
-          login(response.admin, response.token);
-          setLocation("/admin/dashboard");
-        }
-      } 
-      
-      // ─── CAS 2 : Envoi du Code OTP ───
-      else {
-        console.log("📤 Étape 2 : Vérification OTP");
-
-        const response = await authAPI.verifyOtp({
-          email: formData.email.trim(),
-          otp: formData.otp.trim(),
-        });
-
+      if (response.requireOtp) {
         toast({
-          title: t("Connexion réussie", "Login successful"),
-          description: t("Bienvenue !", "Welcome!"),
+          title: t("Vérification requise", "Verification required"),
+          description: t(`Code envoyé à ${response.email}`, `Code sent to ${response.email}`),
         });
-
-        // Connexion finale
+        setSavedEmail(data.email.trim());
+        setStep("otp");
+      } else if (response.token) {
         login(response.admin, response.token);
         setLocation("/admin/dashboard");
       }
-
     } catch (error: any) {
-      console.error("💥 Erreur:", error);
-      const errorMessage = error?.message || "Erreur inconnue";
-
       toast({
         variant: "destructive",
         title: t("Erreur", "Error"),
-        description: errorMessage,
+        description: error?.message || "Identifiants incorrects",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const onOtpSubmit = async (data: OtpFormData) => {
+    setIsSubmitting(true);
+    try {
+      const { authAPI } = await import("@/lib/api");
+      const response = await authAPI.verifyOtp({
+        email: savedEmail,
+        otp: data.otp.trim(),
+      });
+
+      toast({
+        title: t("Connexion réussie", "Login successful"),
+        description: t("Bienvenue !", "Welcome!"),
+      });
+
+      login(response.admin, response.token);
+      setLocation("/admin/dashboard");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: t("Erreur", "Error"),
+        description: error?.message || "Code invalide",
       });
     } finally {
       setIsSubmitting(false);
@@ -132,7 +141,10 @@ export default function AdminLogin() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form 
+          onSubmit={step === "credentials" ? handleSubmitLogin(onLoginSubmit) : handleSubmitOtp(onOtpSubmit)} 
+          className="space-y-4"
+        >
           
           {/* CHAMPS ÉTAPE 1 : EMAIL & PASS */}
           {step === "credentials" && (
@@ -143,12 +155,13 @@ export default function AdminLogin() {
                 </label>
                 <Input
                   type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
+                  {...registerLogin("email")}
                   placeholder="admin@example.com"
                   data-testid="input-email"
                 />
+                {loginErrors.email && (
+                  <p className="text-sm text-destructive mt-1">{loginErrors.email.message}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2 flex items-center gap-2">
@@ -156,12 +169,13 @@ export default function AdminLogin() {
                 </label>
                 <Input
                   type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
+                  {...registerLogin("password")}
                   placeholder="••••••••"
                   data-testid="input-password"
                 />
+                {loginErrors.password && (
+                  <p className="text-sm text-destructive mt-1">{loginErrors.password.message}</p>
+                )}
               </div>
             </div>
           )}
@@ -172,15 +186,16 @@ export default function AdminLogin() {
               <div>
                 <Input
                   type="text"
-                  value={formData.otp}
-                  onChange={(e) => setFormData({ ...formData, otp: e.target.value })}
-                  required
+                  {...registerOtp("otp")}
                   maxLength={6}
                   className="text-center text-2xl tracking-widest font-mono h-14"
                   placeholder="000000"
                   autoFocus
                   data-testid="input-otp"
                 />
+                {otpErrors.otp && (
+                  <p className="text-sm text-destructive mt-1 text-center">{otpErrors.otp.message}</p>
+                )}
               </div>
             </div>
           )}
@@ -207,7 +222,7 @@ export default function AdminLogin() {
               className="w-full"
               onClick={() => {
                 setStep("credentials");
-                setFormData(prev => ({ ...prev, otp: "" }));
+                resetOtp();
               }}
               disabled={isSubmitting}
             >

@@ -1,8 +1,20 @@
 import express from "express";
 import { Project } from "../models/Project";
 import { authenticateAdmin } from "../middleware/authAdmin";
+import { z } from "zod";
 
 const router = express.Router();
+
+const backendProjectSchema = z.object({
+  titleFr: z.string().min(1, "Le titre FR est requis"),
+  titleEn: z.string().min(1, "Le titre EN est requis"),
+  descriptionFr: z.string().min(1, "La description FR est requise"),
+  descriptionEn: z.string().min(1, "La description EN est requise"),
+  categories: z.array(z.string()).min(1, "Au moins une catégorie est requise"),
+  imageUrl: z.string().optional(),
+  githubUrl: z.string().optional(),
+  demoUrl: z.string().optional(),
+});
 
 /**
  * GET /api/projects (Public)
@@ -31,11 +43,15 @@ router.get("/", async (req, res) => {
  */
 router.post("/", authenticateAdmin, async (req, res) => {
   try {
-    const project = new Project(req.body);
+    const validatedData = backendProjectSchema.parse(req.body);
+    const project = new Project(validatedData);
     await project.save();
 
     res.status(201).json(project);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: (error as any).errors[0].message });
+    }
     const message = error instanceof Error ? error.message : "Erreur création projet";
     res.status(400).json({ error: message });
   }
@@ -46,7 +62,9 @@ router.post("/", authenticateAdmin, async (req, res) => {
  */
 router.put("/:id", authenticateAdmin, async (req, res) => {
   try {
-    const project = await Project.findByIdAndUpdate(req.params.id, req.body, {
+    const validatedData = backendProjectSchema.parse(req.body);
+    
+    const project = await Project.findByIdAndUpdate(req.params.id, validatedData, {
       new: true,
       runValidators: true,
     });
@@ -57,6 +75,9 @@ router.put("/:id", authenticateAdmin, async (req, res) => {
 
     res.json(project);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: (error as any).errors[0].message });
+    }
     const message = error instanceof Error ? error.message : "Erreur mise à jour projet";
     res.status(400).json({ error: message });
   }

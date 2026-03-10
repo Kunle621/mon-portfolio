@@ -1,5 +1,5 @@
 // client/src/pages/admin/SettingsPage.tsx
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileAPI } from "@/lib/api";
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { User, FileText, Link as LinkIcon, Save, Upload } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { emailSettingsSchema } from "@/lib/validations";
 import { ProfileData } from "@/types";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -25,11 +27,25 @@ export function SettingsPage() {
     queryFn: () => profileAPI.get(),
   });
 
-  const [formData, setFormData] = useState<ProfileData>({} as ProfileData);
+  const {
+    register: registerProfile,
+    handleSubmit: handleSubmitProfile,
+    setValue: setProfileValue,
+    watch: watchProfile
+  } = useForm<ProfileData>({
+    defaultValues: {}
+  });
+
+  const bioFr = watchProfile("bioFr");
+  const bioEn = watchProfile("bioEn");
 
   useEffect(() => {
-    if (profile) setFormData(profile);
-  }, [profile]);
+    if (profile) {
+      Object.keys(profile).forEach((key) => {
+        setProfileValue(key as keyof ProfileData, profile[key as keyof ProfileData]);
+      });
+    }
+  }, [profile, setProfileValue]);
 
   // Mutation update
   const updateMutation = useMutation({
@@ -50,10 +66,7 @@ export function SettingsPage() {
     }
   });
 
-  // Fonction générique pour modifier un champ
-  const handleChange = (field: keyof ProfileData, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+
 
   // --- UPLOAD PHOTO ---
   const uploadHeadshot = async (file: File) => {
@@ -62,7 +75,7 @@ export function SettingsPage() {
       const form = new FormData();
       form.append("image", file);
       const data = await profileAPI.uploadHeadshot(form, token);
-      if (data.headshotUrl) handleChange("headshotUrl", data.headshotUrl);
+      if (data.headshotUrl) setProfileValue("headshotUrl", data.headshotUrl);
       toast({ title: t("Succès", "Success"), description: "Photo de profil uploadée." });
     } catch (error) {
       toast({ variant: "destructive", title: t("Erreur", "Error"), description: "Échec de l'upload de la photo." });
@@ -76,23 +89,31 @@ export function SettingsPage() {
       const form = new FormData();
       form.append("cv", file);
       const data = await profileAPI.uploadCV(form, token);
-      if (data.cvUrl) handleChange("cvUrl", data.cvUrl);
+      if (data.cvUrl) setProfileValue("cvUrl", data.cvUrl);
       toast({ title: t("Succès", "Success"), description: "CV uploadé avec succès." });
     } catch (error) {
       toast({ variant: "destructive", title: t("Erreur", "Error"), description: "Échec de l'upload du CV." });
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateMutation.mutate(formData);
+  const onProfileSubmit = (data: ProfileData) => {
+    let emailValid = true;
+    try {
+        emailSettingsSchema.parse({ email: data.email });
+    } catch (e: any) {
+        toast({ variant: "destructive", title: "Erreur Email", description: e.errors[0].message });
+        emailValid = false;
+    }
+    if (emailValid) {
+        updateMutation.mutate(data);
+    }
   };
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <h1 className="text-2xl font-bold">{t("Mon Profil & CV", "My Profile & CV")}</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmitProfile(onProfileSubmit)} className="space-y-6">
         {/* --- INFO PERSO --- */}
         <Card>
           <CardHeader>
@@ -104,39 +125,35 @@ export function SettingsPage() {
             <div className="grid grid-cols-2 gap-4">
               <Input
                 placeholder="Nom complet"
-                value={formData.name || ""}
-                onChange={(e) => handleChange("name", e.target.value)}
+                {...registerProfile("name")}
               />
-              <Input
-                placeholder="Email"
-                value={formData.email || ""}
-                onChange={(e) => handleChange("email", e.target.value)}
-              />
+              <div>
+                <Input
+                  placeholder="Email"
+                  {...registerProfile("email")}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <Input
                 placeholder="Titre (FR)"
-                value={formData.titleFr || ""}
-                onChange={(e) => handleChange("titleFr", e.target.value)}
+                {...registerProfile("titleFr")}
               />
               <Input
                 placeholder="Title (EN)"
-                value={formData.titleEn || ""}
-                onChange={(e) => handleChange("titleEn", e.target.value)}
+                {...registerProfile("titleEn")}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <Input
                 placeholder="Téléphone"
-                value={formData.phone || ""}
-                onChange={(e) => handleChange("phone", e.target.value)}
+                {...registerProfile("phone")}
               />
               <Input
                 placeholder="Localisation"
-                value={formData.location || ""}
-                onChange={(e) => handleChange("location", e.target.value)}
+                {...registerProfile("location")}
               />
             </div>
 
@@ -144,8 +161,7 @@ export function SettingsPage() {
             <div>
               <Input
                 placeholder="Disponibilité"
-                value={formData.availability || ""}
-                onChange={(e) => handleChange("availability", e.target.value)}
+                {...registerProfile("availability")}
               />
             </div>
           </CardContent>
@@ -164,9 +180,9 @@ export function SettingsPage() {
             <div className="space-y-2">
               <label className="font-medium">Photo de Profil</label>
               <div className="flex items-center gap-4">
-                {formData.headshotUrl ? (
+                {watchProfile("headshotUrl") ? (
                   <img
-                    src={formData.headshotUrl}
+                    src={watchProfile("headshotUrl")}
                     className="w-20 h-20 rounded-full object-cover"
                     alt="Profil"
                   />
@@ -192,10 +208,10 @@ export function SettingsPage() {
             <div className="space-y-2">
               <label className="font-medium">CV (PDF)</label>
               <div className="flex items-center gap-4">
-                {formData.cvUrl ? (
+                {watchProfile("cvUrl") ? (
                   <a
                     className="text-blue-600 underline"
-                    href={formData.cvUrl}
+                    href={watchProfile("cvUrl")}
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -224,8 +240,8 @@ export function SettingsPage() {
               <label className="font-medium">Bio (FR)</label>
               <ReactQuill
                 theme="snow"
-                value={formData.bioFr || ""}
-                onChange={(v) => handleChange("bioFr", v)}
+                value={bioFr || ""}
+                onChange={(v) => setProfileValue("bioFr", v)}
               />
             </div>
 
@@ -234,8 +250,8 @@ export function SettingsPage() {
               <label className="font-medium">Bio (EN)</label>
               <ReactQuill
                 theme="snow"
-                value={formData.bioEn || ""}
-                onChange={(v) => handleChange("bioEn", v)}
+                value={bioEn || ""}
+                onChange={(v) => setProfileValue("bioEn", v)}
               />
             </div>
           </CardContent>
@@ -251,18 +267,15 @@ export function SettingsPage() {
           <CardContent className="grid grid-cols-3 gap-4">
             <Input
               placeholder="GitHub URL"
-              value={formData.githubUrl || ""}
-              onChange={(e) => handleChange("githubUrl", e.target.value)}
+              {...registerProfile("githubUrl")}
             />
             <Input
               placeholder="LinkedIn URL"
-              value={formData.linkedinUrl || ""}
-              onChange={(e) => handleChange("linkedinUrl", e.target.value)}
+              {...registerProfile("linkedinUrl")}
             />
             <Input
               placeholder="Twitter URL"
-              value={formData.twitterUrl || ""}
-              onChange={(e) => handleChange("twitterUrl", e.target.value)}
+              {...registerProfile("twitterUrl")}
             />
           </CardContent>
         </Card>

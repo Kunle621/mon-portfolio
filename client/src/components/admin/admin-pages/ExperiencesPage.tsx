@@ -4,6 +4,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { experiencesAPI } from "@/lib/api";
 import { ExperienceData } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { experienceSchema, type ExperienceFormData } from "@/lib/validations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -22,13 +25,19 @@ export function ExperiencesPage() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExperience, setEditingExperience] = useState<ExperienceData | null>(null);
-  const [formData, setFormData] = useState({
-    company: "",
-    position: "",
-    startDate: "",
-    endDate: "",
-    description: "",
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    reset: resetHookForm,
+    setValue,
+    watch,
+    formState: { errors: formErrors }
+  } = useForm<ExperienceFormData>({
+    resolver: zodResolver(experienceSchema),
+    defaultValues: { company: "", position: "", startDate: "", endDate: "", description: "" }
   });
+
+  const descriptionValue = watch("description");
 
   const { data: experiences, isLoading } = useQuery({
     queryKey: ["experiences"],
@@ -74,34 +83,25 @@ export function ExperiencesPage() {
   });
 
   const resetForm = () => {
-    setFormData({
-      company: "",
-      position: "",
-      startDate: "",
-      endDate: "",
-      description: "",
-    });
+    resetHookForm();
     setEditingExperience(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (data: ExperienceFormData) => {
     if (editingExperience) {
-      updateMutation.mutate({ id: editingExperience._id!, data: formData });
+      updateMutation.mutate({ id: editingExperience._id!, data });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(data);
     }
   };
 
   const handleEdit = (experience: ExperienceData) => {
     setEditingExperience(experience);
-    setFormData({
-      company: experience.company,
-      position: experience.position,
-      startDate: experience.startDate,
-      endDate: experience.endDate || "",
-      description: experience.description,
-    });
+    setValue("company", experience.company);
+    setValue("position", experience.position);
+    setValue("startDate", experience.startDate);
+    setValue("endDate", experience.endDate || "");
+    setValue("description", experience.description);
     setIsDialogOpen(true);
   };
 
@@ -145,7 +145,7 @@ export function ExperiencesPage() {
                 {editingExperience ? "Modifier l'Expérience" : "Ajouter une Nouvelle Expérience"}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleFormSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="company" className="text-sm font-medium">
@@ -156,12 +156,11 @@ export function ExperiencesPage() {
                     <Input
                       id="company"
                       placeholder="Nom de l'entreprise"
-                      value={formData.company}
-                      onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                      {...register("company")}
                       className="pl-10"
-                      required
                     />
                   </div>
+                  {formErrors.company && <p className="text-sm text-destructive">{formErrors.company.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="position" className="text-sm font-medium">
@@ -172,12 +171,11 @@ export function ExperiencesPage() {
                     <Input
                       id="position"
                       placeholder="Intitulé du poste"
-                      value={formData.position}
-                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                      {...register("position")}
                       className="pl-10"
-                      required
                     />
                   </div>
+                  {formErrors.position && <p className="text-sm text-destructive">{formErrors.position.message}</p>}
                 </div>
               </div>
 
@@ -191,12 +189,11 @@ export function ExperiencesPage() {
                     <Input
                       id="startDate"
                       type="date"
-                      value={formData.startDate}
-                      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      {...register("startDate")}
                       className="pl-10"
-                      required
                     />
                   </div>
+                  {formErrors.startDate && <p className="text-sm text-destructive">{formErrors.startDate.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="endDate" className="text-sm font-medium">
@@ -207,12 +204,12 @@ export function ExperiencesPage() {
                     <Input
                       id="endDate"
                       type="date"
-                      value={formData.endDate}
-                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      {...register("endDate")}
                       className="pl-10"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">Laissez vide si c'est votre poste actuel</p>
+                  {formErrors.endDate && <p className="text-sm text-destructive">{formErrors.endDate.message}</p>}
                 </div>
               </div>
 
@@ -223,8 +220,8 @@ export function ExperiencesPage() {
                 <div className="border rounded-lg">
                   <ReactQuill
                     theme="snow"
-                    value={formData.description}
-                    onChange={(value) => setFormData({ ...formData, description: value })}
+                    value={descriptionValue || ""}
+                    onChange={(value) => setValue("description", value, { shouldValidate: true })}
                     modules={{
                       toolbar: [
                         [{ 'header': [1, 2, 3, false] }],
@@ -239,6 +236,7 @@ export function ExperiencesPage() {
                     className="min-h-[120px]"
                   />
                 </div>
+                {formErrors.description && <p className="text-sm text-destructive">{formErrors.description.message}</p>}
               </div>
 
               <Separator />

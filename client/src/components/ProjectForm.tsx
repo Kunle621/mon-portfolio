@@ -1,45 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { projectSchema, type ProjectFormData } from "@/lib/validations";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 
 interface ProjectFormProps {
   onSubmit: (project: any) => void;
   isSubmitting?: boolean;
+  initialData?: any; // Pour l'édition
 }
 
 const allowedCategories = ["web", "mobile", "deeplearning", "datascience"];
 
-export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
+export function ProjectForm({ onSubmit, isSubmitting, initialData }: ProjectFormProps) {
   const { t } = useLanguage();
-  const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    titleFr: "",
-    titleEn: "",
-    descriptionFr: "",
-    descriptionEn: "",
-    categories: ["web"], // tableau, correspond au schéma Mongoose
-    imageUrl: "",
-    githubUrl: "",
-    demoUrl: "",
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    reset,
+    formState: { errors }
+  } = useForm<ProjectFormData>({
+    resolver: zodResolver(projectSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      tags: "",
+      link: "",
+      github: "",
+    }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.titleFr || !formData.titleEn) {
-      toast({
-        variant: "destructive",
-        title: t("Erreur", "Error"),
-        description: t("Le titre est requis", "Title is required"),
-      });
-      return;
-    }
+  const [category, setCategory] = useState("web");
+  const [imageUrl, setImageUrl] = useState("");
 
-    onSubmit(formData);
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        title: initialData.titleFr || initialData.title || "", // Simplification requise si structure a changé
+        description: initialData.descriptionFr || initialData.description || "",
+        tags: initialData.categories ? initialData.categories.join(", ") : "web",
+        link: initialData.demoUrl || "",
+        github: initialData.githubUrl || ""
+      });
+      if (initialData.categories && initialData.categories[0]) setCategory(initialData.categories[0]);
+      if (initialData.imageUrl) setImageUrl(initialData.imageUrl);
+    }
+  }, [initialData, reset]);
+
+  const onSubmitForm = (data: ProjectFormData) => {
+    // Reconstruire l'objet attendu par l'API
+    const apiData = {
+      titleFr: data.title,
+      titleEn: data.title, // Fallback en attendant un vrai champ
+      descriptionFr: data.description,
+      descriptionEn: data.description, // Fallback en attendant un vrai champ
+      categories: [category],
+      imageUrl: imageUrl,
+      githubUrl: data.github || "",
+      demoUrl: data.link || "",
+    };
+
+    onSubmit(apiData);
   };
 
   return (
@@ -48,56 +74,33 @@ export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
         {t("Ajouter un projet", "Add Project")}
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleFormSubmit(onSubmitForm)} className="space-y-4">
         {/* Titres */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">
-              {t("Titre (FR)", "Title (FR)")}
+              {t("Titre", "Title")}
             </label>
             <Input
-              value={formData.titleFr}
-              onChange={(e) => setFormData({ ...formData, titleFr: e.target.value })}
-              required
-              placeholder={t("Titre en français", "Title in French")}
+              {...register("title")}
+              placeholder={t("Titre du projet", "Project title")}
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              {t("Titre (EN)", "Title (EN)")}
-            </label>
-            <Input
-              value={formData.titleEn}
-              onChange={(e) => setFormData({ ...formData, titleEn: e.target.value })}
-              required
-              placeholder={t("Titre en anglais", "Title in English")}
-            />
+            {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
           </div>
         </div>
 
         {/* Descriptions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">
-              {t("Description (FR)", "Description (FR)")}
+              {t("Description", "Description")}
             </label>
             <Textarea
-              value={formData.descriptionFr}
-              onChange={(e) => setFormData({ ...formData, descriptionFr: e.target.value })}
-              placeholder={t("Description en français", "Description in French")}
+              {...register("description")}
+              placeholder={t("Description du projet", "Project description")}
               rows={3}
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              {t("Description (EN)", "Description (EN)")}
-            </label>
-            <Textarea
-              value={formData.descriptionEn}
-              onChange={(e) => setFormData({ ...formData, descriptionEn: e.target.value })}
-              placeholder={t("Description en anglais", "Description in English")}
-              rows={3}
-            />
+            {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
           </div>
         </div>
 
@@ -108,10 +111,8 @@ export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
               {t("Catégorie", "Category")}
             </label>
             <select
-              value={formData.categories[0]} // toujours le premier élément du tableau
-              onChange={(e) =>
-                setFormData({ ...formData, categories: [e.target.value] }) // mettre à jour en tableau
-              }
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
               className="w-full p-2 border rounded-md bg-background text-foreground"
             >
               {allowedCategories.map((cat) => (
@@ -123,14 +124,13 @@ export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">
-              {t("URL de l'image", "Image URL")}
+              {t("Tags (séparés par des virgules)", "Tags (comma separated)")}
             </label>
             <Input
-              type="url"
-              value={formData.imageUrl}
-              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              placeholder="https://example.com/image.png"
+              {...register("tags")}
+              placeholder="React, Node, MongoDB..."
             />
+            {errors.tags && <p className="text-sm text-destructive mt-1">{errors.tags.message}</p>}
           </div>
         </div>
 
@@ -142,10 +142,10 @@ export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
             </label>
             <Input
               type="url"
-              value={formData.githubUrl}
-              onChange={(e) => setFormData({ ...formData, githubUrl: e.target.value })}
+              {...register("github")}
               placeholder="https://github.com/..."
             />
+            {errors.github && <p className="text-sm text-destructive mt-1">{errors.github.message}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">
@@ -153,10 +153,10 @@ export function ProjectForm({ onSubmit, isSubmitting }: ProjectFormProps) {
             </label>
             <Input
               type="url"
-              value={formData.demoUrl}
-              onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
+              {...register("link")}
               placeholder="https://example.com"
             />
+            {errors.link && <p className="text-sm text-destructive mt-1">{errors.link.message}</p>}
           </div>
         </div>
 

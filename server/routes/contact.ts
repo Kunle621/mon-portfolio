@@ -3,8 +3,15 @@ import { Contact } from "../models/Contact";
 import { authenticateAdmin } from "../middleware/authAdmin";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import { z } from "zod";
 
 dotenv.config();
+
+const contactSchema = z.object({
+  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+  email: z.string().email("Adresse email invalide"),
+  message: z.string().min(10, "Le message doit contenir au moins 10 caractères"),
+});
 
 const router = express.Router();
 
@@ -22,7 +29,8 @@ const transporter = nodemailer.createTransport({
 // POST /api/contact (Public - Envoi message)
 router.post("/", async (req, res) => {
   try {
-    const contact = new Contact(req.body);
+    const validatedData = contactSchema.parse(req.body);
+    const contact = new Contact(validatedData);
     await contact.save();
 
     // Envoi automatique d'une réponse
@@ -38,13 +46,16 @@ router.post("/", async (req, res) => {
                <p>Je vous répondrai dans les plus brefs délais.</p>
                <p>Cordialement,<br>Amouss Yahya</p>`,
       });
-      console.log("✅ Réponse automatique envoyée à", contact.email);
+
     } catch (emailError) {
       console.error("❌ Erreur envoi réponse automatique:", emailError);
     }
 
     res.status(201).json({ message: "Message envoyé avec succès" });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: (error as any).errors[0].message });
+    }
     res.status(400).json({ error: "Erreur envoi message" });
   }
 });

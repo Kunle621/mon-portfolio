@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
+import { z } from "zod";
 
 dotenv.config();
 
@@ -57,7 +58,7 @@ router.post("/login", async (req: Request<{}, {}, LoginRequestBody>, res: Respon
     admin.otpExpires = new Date(Date.now() + 10 * 60 * 1000); 
     await admin.save();
 
-    console.log(`🔐 OTP GÉNÉRÉ pour ${admin.email}: ${otpCode}`);
+
 
     // ✅ Tentative d'envoi d'email (Sécurisée)
     try {
@@ -68,11 +69,11 @@ router.post("/login", async (req: Request<{}, {}, LoginRequestBody>, res: Respon
             text: `Votre code : ${otpCode}`,
             html: `<p>Votre code est : <strong>${otpCode}</strong></p>`,
         });
-        console.log("✅ Email envoyé avec succès");
+
     } catch (emailError) {
         console.error("❌ ERREUR EMAIL:", emailError);
         // Fallback pour le développement
-        console.log("⚠️ MODE DEV: Copie ce code pour te connecter :", otpCode);
+
     }
 
     // On renvoie toujours un succès pour que le front affiche l'input OTP
@@ -176,12 +177,13 @@ router.get("/stats", authenticateAdmin, async (req, res) => {
 });
 
 // ─── 5. SETTINGS: EMAIL ─────────────────────────
+const emailSettingsSchema = z.object({
+  email: z.string().email("Adresse email invalide"),
+});
+
 router.patch("/settings", authenticateAdmin, async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: "Email requis" });
-    }
+    const { email } = emailSettingsSchema.parse(req.body);
 
     // Vérifier si l'email existe déjà ailleurs
     const existing = await Admin.findOne({ email: email.toLowerCase() });
@@ -201,18 +203,25 @@ router.patch("/settings", authenticateAdmin, async (req, res) => {
 
     return res.json({ email: admin!.email });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: (error as any).errors[0].message });
+    }
     console.error("Erreur mise à jour email:", error);
     return res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
 // ─── 6. SETTINGS: PASSWORD ──────────────────────
+const passwordSettingsSchema = z.object({
+  currentPassword: z.string().min(1, "Le mot de passe actuel est requis"),
+  newPassword: z.string().min(8, "Le nouveau mot de passe doit contenir au moins 8 caractères"),
+  // On ne vérifie pas confirmPassword côté backend, vu que le frontend le fait et n'envoie que newPassword 
+  // Mais pour rester safe, on demande juste currentPassword et newPassword
+});
+
 router.patch("/settings/password", authenticateAdmin, async (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: "Tous les champs sont requis" });
-    }
+    const { currentPassword, newPassword } = passwordSettingsSchema.parse(req.body);
 
     const token = req.headers.authorization!.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
@@ -233,6 +242,9 @@ router.patch("/settings/password", authenticateAdmin, async (req, res) => {
 
     return res.json({ message: "Mot de passe mis à jour" });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: (error as any).errors[0].message });
+    }
     console.error("Erreur changement mot de passe:", error);
     return res.status(500).json({ error: "Erreur serveur" });
   }

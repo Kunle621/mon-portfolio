@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { contactSchema, type ContactFormData } from "@/lib/validations";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,8 +17,20 @@ export function Contact() {
   const { t } = useLanguage();
   const { toast } = useToast();
 
-  // Formulaire de contact
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  // Formulaire de contact avec react-hook-form
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors }
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      message: ""
+    }
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- Récupération du profil ---
@@ -24,12 +39,11 @@ export function Contact() {
     queryFn: () => profileAPI.get(),
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
 
     try {
-      await contactAPI.submit(formData);
+      await contactAPI.submit(data);
 
       toast({
         title: t("Message envoyé !", "Message sent!"),
@@ -39,7 +53,7 @@ export function Contact() {
         ),
       });
 
-      setFormData({ name: "", email: "", message: "" });
+      reset();
     } catch {
       toast({
         variant: "destructive",
@@ -73,18 +87,19 @@ export function Contact() {
           {/* Formulaire de contact */}
           <div>
             <Card className="p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium mb-2">
                     {t("Nom", "Name")}
                   </label>
                   <Input
                     id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
+                    {...register("name")}
                     placeholder={t("Votre nom", "Your name")}
                   />
+                  {errors.name && (
+                    <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -94,11 +109,12 @@ export function Contact() {
                   <Input
                     id="email"
                     type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
+                    {...register("email")}
                     placeholder={t("votre@email.com", "your@email.com")}
                   />
+                  {errors.email && (
+                    <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -107,12 +123,13 @@ export function Contact() {
                   </label>
                   <Textarea
                     id="message"
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    required
+                    {...register("message")}
                     placeholder={t("Parlez-moi de votre projet...", "Tell me about your project...")}
                     rows={6}
                   />
+                  {errors.message && (
+                    <p className="text-sm text-destructive mt-1">{errors.message.message}</p>
+                  )}
                 </div>
 
                 <Button

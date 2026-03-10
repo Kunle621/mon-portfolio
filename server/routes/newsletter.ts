@@ -1,13 +1,18 @@
 import express from "express";
 import { Newsletter } from "../models/Newsletter";
 import { authenticateAdmin } from "../middleware/authAdmin";
+import { z } from "zod";
+
+const newsletterSchema = z.object({
+  email: z.string().email("Adresse email invalide"),
+});
 
 const router = express.Router();
 
 // POST /api/newsletter (Public - Abonnement)
 router.post("/", async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email } = newsletterSchema.parse(req.body);
     const existing = await Newsletter.findOne({ email });
     if (existing) {
       return res.status(400).json({ error: "Email déjà abonné" });
@@ -17,6 +22,9 @@ router.post("/", async (req, res) => {
     await newsletter.save();
     res.status(201).json({ message: "Abonné avec succès" });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: (error as any).errors[0].message });
+    }
     res.status(400).json({ error: "Erreur abonnement" });
   }
 });
