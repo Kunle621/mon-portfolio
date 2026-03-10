@@ -1,5 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Github, Mail, Instagram, Facebook, MessageCircle, Linkedin } from "lucide-react";
+import { Github, Mail, Instagram, MessageCircle, Linkedin } from "lucide-react";
 
 export function Footer() {
   const { t, language } = useLanguage();

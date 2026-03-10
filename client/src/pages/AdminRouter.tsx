@@ -1,5 +1,4 @@
 // src/pages/AdminRouter.tsx
-import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 

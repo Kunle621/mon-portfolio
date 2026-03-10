@@ -6,7 +6,6 @@ import { Download, Icon } from "lucide-react"; // ⚠️ Importe uniquement ce d
 import { useQuery } from "@tanstack/react-query";
 import { profileAPI, skillsAPI } from "@/lib/api";
 import { ProfileData, SkillData } from "@/types";
-import * as React from "react";
 
 // ✅ Importe le helper centralisé
 import { getIconComponent } from "@/lib/icons";

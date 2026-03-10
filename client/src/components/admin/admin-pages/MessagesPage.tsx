@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare, Trash2, CheckCircle, Mail, Calendar, Reply } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -57,7 +57,7 @@ export function MessagesPage() {
       setReplyData({ subject: "", message: "" });
       queryClient.invalidateQueries({ queryKey: ["admin-messages"] });
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({ title: t("Erreur lors de l'envoi", "Error sending reply"), variant: "destructive" });
     },
   });

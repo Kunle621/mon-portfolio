@@ -118,7 +118,7 @@ export function ServicesSkillsPage() {
 
   // Fonction utilitaire pour récupérer une icône par son nom
   const getIconComponent = (name: string) => {
-    const Icon = LucideIcons[name as keyof typeof LucideIcons];
+    const Icon = LucideIcons[name as keyof typeof LucideIcons] as any;
     return Icon ? <Icon className="w-4 h-4" /> : null;
   };
 

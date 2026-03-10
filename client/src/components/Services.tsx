@@ -5,10 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { servicesAPI } from "@/lib/api";
 import { ServiceData } from "@/types";
 import * as LucideIcons from "lucide-react";
-import * as React from "react";
+
 
 // ✅ Helper pour récupérer une icône Lucide par son nom (string)
-const getIconComponent = (iconName: string) => {
+const getIconComponent = (iconName: string): any => {
   const Icon = LucideIcons[iconName as keyof typeof LucideIcons];
   return Icon || LucideIcons.Code2; // fallback sûr
 };
